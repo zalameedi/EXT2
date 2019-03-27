@@ -14,20 +14,38 @@ extern char line[256], cmd[32], pathname[256];
 #define GROUP  000070
 #define OTHER  000007
 
-change_dir(char *pathname)
+change_dir()
 {
-  if (pathname == 0)
+  char temp[256];
+  MINODE *newip;
+  MINODE *mip;
+
+  if (pathname[0] == 0)
   {
 	iput(running->cwd);
-	running->cwd = root;
+  running->cwd = iget(root->dev, 2);
+  return;
+  }
+
+  if(pathname[0]=='/')
+  {
+    dev = root->dev;
   }
   else
   {
 	int ino;
-	MINODE *mip;
-	ino = getino(pathname);
+  strcpy(temp, pathname);
+	ino = getino(dev, temp);
+  if(!ino)
+  {
+    printf("Not a directory\n");
+    return(-1);
+  }
+  printf("dev=%d ino=%d\n", dev, ino);
+
 	mip = iget(dev, ino);
-	if (S_ISDIR(mip->i_mode))
+  printf("mode=%4x  ", newip->INODE.i_mode);
+	if (S_ISDIR(mip->INODE.i_mode))
 	{
 		iput(running->cwd);
 		running->cwd = mip;
@@ -38,9 +56,6 @@ change_dir(char *pathname)
 		printf("not a directory\n");
 	}
   }
-  printf("chage_dir(): to be constructed\n");
-
-
 }
 
 
