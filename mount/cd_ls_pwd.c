@@ -16,7 +16,6 @@ extern char line[256], cmd[32], pathname[256];
 
 change_dir(char *pathname)
 {
-<<<<<<< HEAD
   if (pathname == 0)
   {
 	iput(running->cwd);
@@ -39,7 +38,6 @@ change_dir(char *pathname)
 		printf("not a directory\n");
 	}
   }
-=======
   printf("chage_dir(): to be constructed\n");
 
 
@@ -100,8 +98,6 @@ int ls_file(MINODE *ip, char *name)
      if (S_ISLNK(mode))
         printf(" -> %s", (char *)ip->INODE.i_block);
      printf("\n");
-
->>>>>>> 56ebada15fb813daa2715dd022c63364b6031a14
 }
 
 
