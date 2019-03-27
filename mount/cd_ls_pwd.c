@@ -36,15 +36,11 @@ change_dir()
 	int ino;
   strcpy(temp, pathname);
 	ino = getino(dev, temp);
-  if(!ino)
-  {
-    printf("Not a directory\n");
-    return(-1);
-  }
+
   printf("dev=%d ino=%d\n", dev, ino);
 
 	mip = iget(dev, ino);
-  printf("mode=%4x  ", newip->INODE.i_mode);
+  printf("mode=%4x  ", mip->INODE.i_mode);
 	if (S_ISDIR(mip->INODE.i_mode))
 	{
 		iput(running->cwd);
@@ -176,22 +172,59 @@ int pwd(MINODE *wd)
 	if (wd == root) 
 		printf("/\n");
 	else
-         rpwd(wd); 
+      rpwd(wd); 
+      printf("\n");
 }
 
 rpwd(MINODE *wd)
-   {
-     if (wd==root) return;
-     int parentino = wd->INODE.i_block[0];
-     pip = iget(dev, parentino);
-     int blk = pip->INODE.i_block[0];
-     char buf[BLKSIZE], my_name[256];
-     get_block(dev, blk, buf);
-     DIR *dp = (DIR *)buf;
-     strncpy(my_name, dp->name, dp->name_len);
-     rpwd(pip);  // recursive call rpwd() with pip
+{
+  if (wd == root)
+    return;
 
-     printf("/%s", my_name);
-   }
+  char *cp;
+  char currName[256];
+  MINODE *parent; 
+  char buf[BLKSIZE];
+  
+  get_block(dev, wd->INODE.i_block[0], buf);
+  dp = (DIR *)buf;
+  cp = buf;
+  int currInode = dp->inode; 
+  
+  cp += dp->rec_len;
+  dp = (DIR *)cp;
+  int parentInode = dp->inode; 
+  parent = iget(dev, parentInode);
+
+  if (parentInode == currInode)
+    return; 
+
+  for (int i = 0; i < 12; i++)
+    {
+      if (parent->INODE.i_block[i] != 0)
+			{
+				get_block(dev, parent->INODE.i_block[i], buf);
+				dp = (DIR *)buf;
+				cp = buf;
+				while(cp < buf + BLKSIZE)
+				{
+					  if (dp->inode == currInode) 
+						{
+							strncpy(currName, dp->name, dp->name_len);
+							currName[dp->name_len] = 0; 
+						}
+					  cp += dp->rec_len;
+					  dp = (DIR *)cp; 
+				}
+			}
+    }
+  rpwd(parent); 
+  iput(parent); 
+  
+  printf("/%s", currName);
+}
+  
+
+  
 
 
