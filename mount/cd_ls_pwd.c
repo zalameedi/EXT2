@@ -15,9 +15,30 @@ extern char line[256], cmd[32], pathname[256];
 #define GROUP  000070
 #define OTHER  000007
 
-change_dir()
+change_dir(char *pathname)
 {
-  printf("chage_dir(): to be constructed\n");
+  if (pathname == 0)
+  {
+	iput(running->cwd);
+	running->cwd = root;
+  }
+  else
+  {
+	int ino;
+	MINODE *mip;
+	ino = getino(pathname);
+	mip = iget(dev, ino);
+	if (S_ISDIR(mip->i_mode))
+	{
+		iput(running->cwd);
+		running->cwd = mip;
+		printf("cd successful\n");
+	}
+	else
+	{
+		printf("not a directory\n");
+	}
+  }
 }
 
 
@@ -29,8 +50,7 @@ int list_file()
 
 int pwd(MINODE *wd)
 {
-  printf("pwd(): yet to be done by YOU\n");
+  
 }
-
 
 
