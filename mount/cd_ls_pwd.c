@@ -27,7 +27,7 @@ change_dir(char *pathname)
 	MINODE *mip;
 	ino = getino(pathname);
 	mip = iget(dev, ino);
-	if (S_ISDIR(mip->i_mode))
+	if (S_ISDIR(mip->INODE.i_mode))
 	{
 		iput(running->cwd);
 		running->cwd = mip;
@@ -158,7 +158,25 @@ int list_file()
 
 int pwd(MINODE *wd)
 {
-  
+	if (wd == root) 
+		printf("/\n");
+	else
+         rpwd(wd); 
 }
+
+rpwd(MINODE *wd)
+   {
+     if (wd==root) return;
+     int parentino = wd->INODE.i_block[0];
+     pip = iget(dev, parentino);
+     int blk = pip->INODE.i_block[0];
+     char buf[BLKSIZE], my_name[256];
+     get_block(dev, blk, buf);
+     DIR *dp = (DIR *)buf;
+     strncpy(my_name, dp->name, dp->name_len);
+     rpwd(pip);  // recursive call rpwd() with pip
+
+     printf("/%s", my_name);
+   }
 
 
