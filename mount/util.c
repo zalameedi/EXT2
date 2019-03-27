@@ -102,14 +102,43 @@ iput(MINODE *mip)
 
 } 
 
-int search(MINODE *mip, char *name)
+int search(MINODE *ip, char *name)
 {
-  // YOUR serach() fucntion as in LAB 6
+    int i;
+    char *cp, temp[256], sbuf[BLKSIZE];
+    DIR *dp;
+    for(i=0; i<12; i++)
+    {
+        if(ip->INODE.i_block[i] == 0)
+        {
+            return 0;
+        }
+        get_block(dev, ip->INODE.i_block[i], sbuf);
+        dp = (DIR *)sbuf;
+        cp = sbuf;
+        while(cp < sbuf + BLKSIZE)
+        {
+            strncpy(temp, dp->name, dp->name_len);
+            temp[dp->name_len] = 0;
+            printf("%3d   %4d     %4d     %s\n",
+                dp->inode, dp->rec_len, dp->name_len, temp);        
+            if(strcmp(name, temp)==0)
+            {
+                printf("found %s : inumber = %d\n", name, dp->inode);
+                return dp->inode;            
+            }
+
+            cp += dp->rec_len;
+            dp = (DIR *)cp;
+        }
+    }
+    return 0;
 }
 
-int getino(char *pathname)
+int getino(int dev, char *pathname)
 {
   int i, ino, blk, disp;
+  char buf[BLKSIZE];
   INODE *ip;
   MINODE *mip;
 
@@ -122,10 +151,13 @@ int getino(char *pathname)
   else
     mip = iget(running->cwd->dev, running->cwd->ino);
 
-  tokenize(pathname);
+  strcpy(buf, pathname);
+  tokenize(buf);
 
   for (i=0; i<n; i++){
       printf("===========================================\n");
+      printf("getino: i=%d name[%d]=%s\n", i, i, name[i]);
+ 
       ino = search(mip, name[i]);
 
       if (ino==0){
