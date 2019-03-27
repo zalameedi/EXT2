@@ -32,7 +32,11 @@ int tokenize(char *pathname)
         n++;
         name[n] = strtok(NULL,"/0");
     }
+<<<<<<< HEAD
 return n;
+=======
+    return n;
+>>>>>>> a9a698372b5b6188765def63c7cbc37c82cff672
 }
 
 // return minode pointer to loaded INODE
