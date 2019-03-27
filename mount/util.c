@@ -25,7 +25,14 @@ int put_block(int dev, int blk, char *buf)
 
 int tokenize(char *pathname)
 {
-  // tokenize pathname in GLOBAL gpath[]
+  n = 0;
+    name[n] = strtok(pathname,"/0");
+    while (name[n] != NULL)
+    {
+        n++;
+        name[n] = strtok(NULL,"/0");
+    }
+    return n;
 }
 
 // return minode pointer to loaded INODE
