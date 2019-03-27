@@ -173,7 +173,25 @@ int list_file()
 
 int pwd(MINODE *wd)
 {
-  
+	if (wd == root) 
+		printf("/\n");
+	else
+         rpwd(wd); 
 }
+
+rpwd(MINODE *wd)
+   {
+     if (wd==root) return;
+     int parentino = wd->INODE.i_block[0];
+     pip = iget(dev, parentino);
+     int blk = pip->INODE.i_block[0];
+     char buf[BLKSIZE], my_name[256];
+     get_block(dev, blk, buf);
+     DIR *dp = (DIR *)buf;
+     strncpy(my_name, dp->name, dp->name_len);
+     rpwd(pip);  // recursive call rpwd() with pip
+
+     printf("/%s", my_name);
+   }
 
 
