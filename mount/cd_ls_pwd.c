@@ -14,6 +14,8 @@ extern char line[256], cmd[32], pathname[256];
 #define GROUP  000070
 #define OTHER  000007
 
+char buff[BLKSIZE];
+
 change_dir()
 {
   char temp[256];
@@ -176,54 +178,67 @@ int pwd(MINODE *wd)
       printf("\n");
 }
 
+
+int getpino(int dev, MINODE* mip)
+{
+    // Gets parent inode for a directory (doesn't work for files)
+    char temp[256];
+    DIR *dp = (DIR *) buff;
+    char *cp = buff;
+
+    get_block(dev, mip->INODE.i_block[0], buff);  // .. should be in block one
+
+    while (cp < buff + BLKSIZE)
+    {
+        strncpy(temp, dp->name, dp->name_len);
+        temp[dp->name_len] = '\0';  // Append NULL character
+        
+        if (!strcmp(temp, ".."))  // Found ye parent
+        {
+            return dp->inode;
+        }
+        
+        cp += dp->rec_len;  // Move to next record
+        dp = (DIR *) cp;
+    }
+    return 0;
+}
+
 rpwd(MINODE *wd)
 {
-  if (wd == root)
-    return;
-
+  MINODE *pip;
+  DIR *dp;
   char *cp;
-  char currName[256];
-  MINODE *parent; 
-  char buf[BLKSIZE];
-  
-  get_block(dev, wd->INODE.i_block[0], buf);
-  dp = (DIR *)buf;
-  cp = buf;
-  int currInode = dp->inode; 
-  
-  cp += dp->rec_len;
-  dp = (DIR *)cp;
-  int parentInode = dp->inode; 
-  parent = iget(dev, parentInode);
+  char temp[256];
 
-  if (parentInode == currInode)
-    return; 
+  if(wd==root)
+  {
+    return;
+  }
 
-  for (int i = 0; i < 12; i++)
+  pip = iget(dev, getpino(dev, wd)); // Extract the parent INODE
+  for(int i=0; i<12; i++)
+  {
+    get_block(dev, pip->INODE.i_block[i], buff);
+    dp = (DIR *) buff;
+    cp = buff;
+
+    while(cp < buff + BLKSIZE)
     {
-      if (parent->INODE.i_block[i] != 0)
-			{
-				get_block(dev, parent->INODE.i_block[i], buf);
-				dp = (DIR *)buf;
-				cp = buf;
-				while(cp < buf + BLKSIZE)
-				{
-					  if (dp->inode == currInode) 
-						{
-							strncpy(currName, dp->name, dp->name_len);
-							currName[dp->name_len] = 0; 
-						}
-					  cp += dp->rec_len;
-					  dp = (DIR *)cp; 
-				}
-			}
+      if(dp->inode == wd->ino) //Find your own ino in parent, grab name
+      {
+        strncpy(temp, dp->name, dp->name_len);
+        temp[dp->name_len] = '\0'; //Don't append null character
+        rpwd(pip);
+        printf("/%s", temp);
+        return;
+      }
+      cp += dp->rec_len;  // Move to next record
+      dp = (DIR *) cp;
     }
-  rpwd(parent); 
-  iput(parent); 
-  
-  printf("/%s", currName);
+  }
 }
-  
+
 
   
 
