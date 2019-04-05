@@ -62,7 +62,7 @@ int mount_root()
   root = iget(dev, 2);
 }
 
-char *disk = "mydisk";
+char *disk = "zdisk";
 int main(int argc, char *argv[ ])
 {
   int ino;
@@ -144,6 +144,10 @@ int main(int argc, char *argv[ ])
     if(strcmp(cmd, "creat") == 0)
     {
       creat_file();
+    }
+    if(strcmp(cmd, "rmdir") == 0)
+    {
+      print_stats(running->cwd);    
     }
   }
 }

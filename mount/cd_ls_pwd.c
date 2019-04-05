@@ -168,6 +168,33 @@ int list_file()
   }
 }
 
+void print_stats(MINODE *ip)
+{
+  char sbuf[1024], temp[256];
+  int i=0;
+  char *cp;
+  printf("iNode \tRec_len\t name_len\t name\n");
+  for(i=0; i<12; i++)
+    {
+        if(ip->INODE.i_block[i] == 0)
+        {
+            return 0;
+        }
+        get_block(dev, ip->INODE.i_block[i], sbuf);
+        dp = (DIR *)sbuf;
+        cp = sbuf;
+        while(cp < sbuf + BLKSIZE)
+        {
+            strncpy(temp, dp->name, dp->name_len);
+            temp[dp->name_len] = 0;
+            printf("%3d   %4d     %4d     %s\n",
+                dp->inode, dp->rec_len, dp->name_len, temp);        
+            cp += dp->rec_len;
+            dp = (DIR *)cp;
+        }
+    }
+}
+
 
 int pwd(MINODE *wd)
 {
@@ -361,7 +388,7 @@ int enter_name(MINODE *pip, int myino, char *name)
     strcpy(dp->name, name);
     printf("dp->name: %s\n", dp->name);
     dp->name_len = strlen(name);
-    dp->rec_len = ideal_len + remain;
+    dp->rec_len = remain;
     dp->inode = myino;
   }
   else
@@ -459,6 +486,8 @@ int my_creat(MINODE *pip, char *name)
   pip->dirty = 1;
   iput(pip);
 }
+
+
 
 
 

@@ -188,12 +188,9 @@ int search(MINODE *ip, char *name)
         while(cp < sbuf + BLKSIZE)
         {
             strncpy(temp, dp->name, dp->name_len);
-            temp[dp->name_len] = 0;
-            printf("%3d   %4d     %4d     %s\n",
-                dp->inode, dp->rec_len, dp->name_len, temp);        
+            temp[dp->name_len] = 0;    
             if(strcmp(name, temp)==0)
             {
-                //printf("found %s : inumber = %d\n", name, dp->inode);
                 return dp->inode;            
             }
 
