@@ -123,7 +123,7 @@ int ls_dir(MINODE *mip)
   MINODE *dip;
 
   for (i=0; i<12; i++){ /* search direct blocks only */
-     printf("i_block[%d] = %d\n", i, mip->INODE.i_block[i]);
+     //printf("i_block[%d] = %d\n", i, mip->INODE.i_block[i]);
      if (mip->INODE.i_block[i] == 0) 
          return 0;
 
@@ -237,6 +237,144 @@ rpwd(MINODE *wd)
       dp = (DIR *) cp;
     }
   }
+}
+
+int dmkdir()
+{
+  MINODE *mip = running->cwd;
+  if(pathname[0] == '/')
+  {
+    mip = root;
+  }
+
+  char parent[64];
+  char child[64];
+  char temp[128];
+
+  strcpy(temp, pathname);
+
+  strcpy(parent, dirname(temp));
+  strcpy(temp, pathname);
+  strcpy(child, basename(temp));
+
+  int pino = getino(dev, parent);
+  MINODE *pip = iget(dev, pino);
+
+  if(S_ISDIR(pip->INODE.i_mode))
+  {
+    if(!search(pip, child))
+    {
+      mymkdir(pip, child);
+    }
+    else
+    {
+      printf("child already exists\n");
+    }
+    
+  }
+  else
+  {
+    printf("not a dir\n");
+  }
+  
+}
+
+int mymkdir(MINODE *pip, char *name)
+{
+  int ino = ialloc(dev);
+  int bno = balloc(dev);
+  char *cp;
+  printf("MKDIR ino: %d\n bno: %d\n name: %s\n ", ino, bno, name);
+
+  MINODE *mip = iget(dev, ino);
+  mip->INODE.i_mode = 0x41ED;		// OR 040755: DIR type and permissions
+  mip->INODE.i_uid  = running->uid;	// Owner uid 
+  mip->INODE.i_gid  = pip->INODE.i_gid;	// Group Id
+  mip->INODE.i_size = BLKSIZE;		// Size in bytes 
+  mip->INODE.i_links_count = 2;	        // Links count=2 because of . and ..
+  mip->INODE.i_atime = mip->INODE.i_ctime = mip->INODE.i_mtime = time(0L);  // set to current time
+  mip->INODE.i_blocks = 2;                	// LINUX: Blocks count in 512-byte chunks 
+  mip->INODE.i_block[0] = bno;             // new DIR has one data block   
+  for (int i = 1; i < 15; i++)
+    mip->INODE.i_block[i] = 0;
+ 
+  mip->dirty = 1;               // mark minode dirty
+  iput(mip);                    // write INODE to dis
+  char buf[BLKSIZE];
+  dp = (DIR*)buf;
+  dp->inode = ino;
+  dp->rec_len = 12;
+  dp->name_len = 1;
+  strcpy(dp->name, ".");
+  cp = buf + dp->rec_len;
+  dp = (DIR*)cp;
+  dp->inode = pip->ino;
+  dp->rec_len = 1012;
+  dp->name_len = 2;
+  strcpy(dp->name, "..");
+  put_block(dev, bno, buf);
+  enter_name(pip, ino, name);
+}
+
+int enter_name(MINODE *pip, int myino, char *name)
+{
+  int i;
+  int ideal_len = 4 * ((8 + strlen(name) + 3) / 4);
+  for (i = 0; i < 12; i++)
+  {
+    if (pip->INODE.i_block[i] == 0)
+    {
+      break;
+    }
+  }
+  char buf[1024];
+  i--;
+  get_block(dev, pip->INODE.i_block[i], buf);
+  dp = (DIR*)buf;
+  char *cp = buf;
+
+  printf("step to LAST entry in data block %d\n", pip->INODE.i_block[i]);
+  while (cp + dp->rec_len < buf + BLKSIZE){
+
+    /****** Technique for printing, compare, etc.******
+    c = dp->name[dp->name_len];
+    dp->name[dp->name_len] = 0;
+    printf("%s ", dp->name);
+    dp->name[dp->name_len] = c;
+    **************************************************/
+
+    cp += dp->rec_len;
+    dp = (DIR *)cp;
+  } 
+  // dp NOW points at last entry in block
+  int remain = dp->rec_len - (4 * ((8 + dp->name_len + 3 ) / 4));
+  if (remain >= ideal_len)
+  {
+    printf("dp->name: %s\n", dp->name);
+    dp->rec_len = 4 * ((8 + dp->name_len + 3) / 4);
+    cp = cp + dp->rec_len;
+    dp = (DIR*) cp;
+    strcpy(dp->name, name);
+    printf("dp->name: %s\n", dp->name);
+    dp->name_len = strlen(name);
+    dp->rec_len = ideal_len + remain;
+    dp->inode = myino;
+  }
+  else
+  {
+    i++;
+    get_block(dev, pip->INODE.i_block[i], buf);
+    cp = buf;
+    dp = (DIR*)cp;
+    dp->rec_len = 1024;
+    strcpy(dp->name, name);
+    printf("dp->name: %s\n", dp->name);
+    dp->name_len = strlen(name);
+    dp->inode = myino;
+  }
+  put_block(dev, pip->INODE.i_block[i], buf);
+  
+
 }
 
 
