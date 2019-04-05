@@ -314,6 +314,10 @@ int mymkdir(MINODE *pip, char *name)
   strcpy(dp->name, "..");
   put_block(dev, bno, buf);
   enter_name(pip, ino, name);
+  pip->INODE.i_links_count++;
+  pip->INODE.i_atime =  time(0L);
+  pip->dirty = 1;
+  iput(pip);
 }
 
 int enter_name(MINODE *pip, int myino, char *name)
@@ -373,9 +377,89 @@ int enter_name(MINODE *pip, int myino, char *name)
     dp->inode = myino;
   }
   put_block(dev, pip->INODE.i_block[i], buf);
-  
-
 }
+
+int creat_file()
+{
+   MINODE *mip = running->cwd;
+  if(pathname[0] == '/')
+  {
+    mip = root;
+  }
+
+  char parent[64];
+  char child[64];
+  char temp[128];
+
+  strcpy(temp, pathname);
+
+  strcpy(parent, dirname(temp));
+  strcpy(temp, pathname);
+  strcpy(child, basename(temp));
+
+  int pino = getino(dev, parent);
+  MINODE *pip = iget(dev, pino);
+
+  if(S_ISDIR(pip->INODE.i_mode))
+  {
+    if(!search(pip, child))
+    {
+      my_creat(pip, child);
+    }
+    else
+    {
+      printf("child already exists\n");
+    }
+    
+  }
+  else
+  {
+    printf("not a dir\n");
+  }
+  
+}
+
+
+int my_creat(MINODE *pip, char *name)
+{
+  int ino = ialloc(dev);
+  int bno = balloc(dev);
+  char *cp;
+  printf("MKDIR ino: %d\n bno: %d\n name: %s\n ", ino, bno, name);
+
+  MINODE *mip = iget(dev, ino);
+  mip->INODE.i_mode = 0x81A4;		// OR 040755: DIR type and permissions
+  mip->INODE.i_uid  = running->uid;	// Owner uid 
+  mip->INODE.i_gid  = pip->INODE.i_gid;	// Group Id
+  mip->INODE.i_size = 0;		// Size in bytes 
+  mip->INODE.i_links_count = 1;	        // Links count=2 because of . and ..
+  mip->INODE.i_atime = mip->INODE.i_ctime = mip->INODE.i_mtime = time(0L);  // set to current time
+  mip->INODE.i_blocks = 2;                	// LINUX: Blocks count in 512-byte chunks 
+  mip->INODE.i_block[0] = bno;             // new DIR has one data block   
+  for (int i = 1; i < 15; i++)
+    mip->INODE.i_block[i] = 0;
+ 
+  mip->dirty = 1;               // mark minode dirty
+  iput(mip);                    // write INODE to dis
+  char buf[BLKSIZE];
+  dp = (DIR*)buf;
+  dp->inode = ino;
+  dp->rec_len = 12;
+  dp->name_len = 1;
+  strcpy(dp->name, ".");
+  cp = buf + dp->rec_len;
+  dp = (DIR*)cp;
+  dp->inode = pip->ino;
+  dp->rec_len = 1012;
+  dp->name_len = 2;
+  strcpy(dp->name, "..");
+  put_block(dev, bno, buf);
+  enter_name(pip, ino, name);
+  pip->INODE.i_atime =  time(0L);
+  pip->dirty = 1;
+  iput(pip);
+}
+
 
 
   

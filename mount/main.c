@@ -116,7 +116,7 @@ int main(int argc, char *argv[ ])
 
   //printf("hit a key to continue : "); getchar();
   while(1){
-    printf("input command : [ls|cd|pwd|mkdir|quit] ");
+    printf("input command : [ls|cd|pwd|mkdir|creat|quit] ");
     fgets(line, 128, stdin);
     line[strlen(line)-1] = 0;
     if (line[0]==0)
@@ -140,6 +140,10 @@ int main(int argc, char *argv[ ])
     if (strcmp(cmd, "mkdir") == 0)
     {
       dmkdir();
+    }
+    if(strcmp(cmd, "creat") == 0)
+    {
+      creat_file();
     }
   }
 }
