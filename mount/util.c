@@ -50,10 +50,8 @@ int ialloc(int dev)
 {
   int  i;
   char buf[BLKSIZE];
-
   // read inode_bitmap block
   get_block(dev, imap, buf);
-
   for (i=0; i < ninodes; i++){
     if (tst_bit(buf, i)==0){
        set_bit(buf,i);
@@ -236,3 +234,69 @@ int getino(int dev, char *pathname)
    }
    return ino;
 }
+
+
+
+int incFreeInodes(int dev)
+{
+sp->s_free_inodes_count++;
+put_block(dev, 1, (char *)sp);
+gp->bg_free_inodes_count++;
+put_block(dev, 2, (char *)gp);
+}
+
+int decFreeInodes(int dev)
+{
+sp->s_free_inodes_count--;
+put_block(dev, 1, (char *)sp);
+gp->bg_free_inodes_count--;
+put_block(dev, 2, (char *)gp);
+}
+
+int idalloc(int dev, int ino)
+{
+int i;
+char buf[BLKSIZE];
+MTABLE *mp = (MTABLE *)get_mtable(dev);
+if (ino > mp->ninodes){ // niodes global
+printf("inumber %d out of range\n", ino);
+return;
+}
+// get inode bitmap block
+get_block(dev, mp->imap, buf);
+clr_bit(buf, ino-1);
+// write buf back
+put_block(dev, mp->imap, buf);
+// update free inode count in SUPER and GD
+incFreeInodes(dev);
+}
+
+int bdalloc(int dev, int ino)
+{
+int i;
+char buf[BLKSIZE];
+MTABLE *mp = (MTABLE *)get_mtable(dev);
+// get inode bitmap block
+get_block(dev, mp->bmap, buf);
+clr_bit(buf, ino-1);
+// write buf back
+put_block(dev, mp->bmap, buf);
+}
+
+
+int incFreeblocks(int dev)
+{
+sp->s_free_blocks_count++;
+put_block(dev, 1, (char *)sp);
+gp->bg_free_blocks_count++;
+put_block(dev, 2, (char*)gp);
+}
+
+int decFreeblocks(int dev)
+{
+sp->s_free_blocks_count--;
+put_block(dev, 1, (char *)sp);
+gp->bg_free_blocks_count--;
+put_block(dev, 2, (char *)gp);
+}
+

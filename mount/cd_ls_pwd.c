@@ -487,6 +487,112 @@ int my_creat(MINODE *pip, char *name)
   iput(pip);
 }
 
+int myrmdir()
+{
+
+  char parent[64];
+  char child[64];
+  char temp[128];
+
+  strcpy(temp, pathname);
+
+  strcpy(parent, dirname(temp));
+  strcpy(temp, pathname);
+  strcpy(child, basename(temp));
+  int pino = getino(dev, parent);
+  MINODE *pip = iget(dev, pino);
+  int ino = getino(dev, pathname);
+  MINODE *mip = iget(dev, ino);
+  if (pathname[0] == 0)
+  {
+    printf("No such pathname.\n");
+  }
+
+  if(pathname[0] == '/')
+  {
+    mip = root;
+  }
+  else
+  {
+    mip = running->cwd;
+  }
+
+  if(S_ISDIR(pip->INODE.i_mode))
+  {
+    if(search(pip, child))
+    {
+      int temp = search(pip, child);
+      mip = iget(dev, temp);
+      if(mip->refCount > 1)
+      {
+        printf("Busy directory\n");
+        return;
+      }
+      if(mip->INODE.i_links_count > 2)
+      {
+        printf("Directory not empty.\n");
+        return;
+      }
+      else 
+      {
+         for (int i=0; i<12; i++){
+         if (mip->INODE.i_block[i]==0)
+             continue;
+         bdealloc(mip->dev, mip->INODE.i_block[i]);
+         idealloc(mip->dev, mip->ino);
+        iput(mip); 
+        pip=iget(mip->dev, pino);
+        rm_child(pip, pathname);
+        pip->INODE.i_links_count --;
+        pip->INODE.i_atime = pip->INODE.i_mtime = time(0L);
+        pip->dirty = 1;
+        iput(pip);
+        return 1;
+         }
+      }
+    }
+    
+  }
+  else 
+  {
+    printf("Not a directory.\n");
+  }
+}
+
+int rm_child(MINODE *parent, char *name)
+{
+  char buf[1024];
+  char *cp;
+  for(int i = 0; i < 12; i++)
+  {
+    if (parent->INODE.i_block[i] == 0)
+    {
+      printf("couldnt find %s\n", name);
+
+    }
+    get_block(dev, parent->INODE.i_block[i], buf);
+    cp = buf;
+    dp = (DIR*)cp;
+    while (cp < buf + BLKSIZE)
+    {
+      if (strcmp(name, dp->name) == 0)
+      {
+        printf("found %s\n", name);
+        if (dp->rec_len == (4 * ((8 + dp->name_len + 3 ) / 4)))
+        {
+          //entry in the middle of block
+        }
+        else
+        {
+          //entry at end of block
+        }
+        
+      }
+      cp += dp->rec_len;
+      dp = (DIR*)cp;
+    }
+  }
+}
 
 
 
