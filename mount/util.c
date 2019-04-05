@@ -23,6 +23,68 @@ int put_block(int dev, int blk, char *buf)
    write(dev, buf, BLKSIZE);
 }   
 
+int tst_bit(char *buf, int bit)
+{
+  int i, j;
+  i = bit/8; j=bit%8;
+  if (buf[i] & (1 << j))
+     return 1;
+  return 0;
+}
+
+int set_bit(char *buf, int bit)
+{
+  int i, j;
+  i = bit/8; j=bit%8;
+  buf[i] |= (1 << j);
+}
+
+int clr_bit(char *buf, int bit)
+{
+  int i, j;
+  i = bit/8; j=bit%8;
+  buf[i] &= ~(1 << j);
+}
+
+int ialloc(int dev)
+{
+  int  i;
+  char buf[BLKSIZE];
+
+  // read inode_bitmap block
+  get_block(dev, imap, buf);
+
+  for (i=0; i < ninodes; i++){
+    if (tst_bit(buf, i)==0){
+       set_bit(buf,i);
+       put_block(dev, imap, buf);
+       return i+1;
+    }
+  }
+  return 0;
+}
+
+int balloc(int dev)
+{
+  int  i;
+  char buf[BLKSIZE];
+
+  // read inode_bitmap block
+  get_block(dev, bmap, buf);
+
+  for (i=0; i < nblocks; i++){
+    if (tst_bit(buf, i)==0)
+    {
+       set_bit(buf,i);
+       put_block(dev, bmap, buf);
+        sp->s_free_blocks_count -= 1;
+        gp->bg_free_blocks_count -= 1;
+       return i+1;
+    }
+  }
+  return 0;
+}
+
 int tokenize(char *pathname)
 {
   n = 0;
@@ -177,4 +239,3 @@ int getino(int dev, char *pathname)
    }
    return ino;
 }
-

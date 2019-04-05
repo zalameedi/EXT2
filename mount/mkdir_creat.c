@@ -1,3 +1,4 @@
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -77,7 +78,7 @@ int ialloc(int dev)
   return 0;
 }
 
-char *disk = "mydisk";
+char *disk = "vdisk";
 
 int main(int argc, char *argv[ ])
 {
@@ -114,25 +115,29 @@ int main(int argc, char *argv[ ])
   for (i=0; i < 5; i++){  
     ino = ialloc(fd);
     printf("allocated ino = %d\n", ino);
+    int x = balloc(fd);
+    printf("%d\n", x);
   }
 }
 
-RUN this program on an empty mydisk; check the allocated ino numbers
 
-Write YOUR own balloc() function, which returns a FREE disk block number
+int balloc(int dev)
+{
+  int  i;
+  char buf[BLKSIZE];
 
-----------------------------------------------------------
-3. In YOUR main.c file, DEFINE THESE globla variables
+  // read inode_bitmap block
+  get_block(dev, bmap, buf);
 
-MINODE minode[NMINODE];
-MINODE *root;
-
-PROC   proc[NPROC], *running;
-
-char gpath[128];   // hold tokenized strings
-char *name[64];    // token string pointers
-int  n;            // number of token strings 
-
-int  fd, dev;
-int  nblocks, ninodes, bmap, imap, inode_start;
-char line[128], cmd[32], pathname[64];
+  for (i=0; i < nblocks; i++){
+    if (tst_bit(buf, i)==0)
+    {
+       set_bit(buf,i);
+       put_block(dev, bmap, buf);
+        sp->s_free_blocks_count -= 1;
+        gp->bg_free_blocks_count -= 1;
+       return i+1;
+    }
+  }
+  return 0;
+}

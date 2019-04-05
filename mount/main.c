@@ -24,6 +24,8 @@ int    fd, dev;
 int    nblocks, ninodes, bmap, imap, inode_start;
 char   line[256], cmd[32], pathname[256];
 
+
+
 #include "util.c"
 #include "cd_ls_pwd.c"
 
@@ -105,6 +107,12 @@ int main(int argc, char *argv[ ])
   running->cwd = iget(dev, 2);
   
   printf("root refCount = %d\n", root->refCount);
+  // for (int i=0; i < 5; i++){  
+  //   ino = ialloc(fd);
+  //   printf("allocated ino = %d\n", ino);
+  //   int x = balloc(fd);
+  //   printf("THIS IS OUR balloc func value: %d\n", x);
+  // }
 
   //printf("hit a key to continue : "); getchar();
   while(1){
@@ -115,6 +123,7 @@ int main(int argc, char *argv[ ])
       continue;
     pathname[0] = 0;
     cmd[0] = 0;
+
     
     sscanf(line, "%s %s", cmd, pathname);
     printf("cmd=%s pathname=%s\n", cmd, pathname);
