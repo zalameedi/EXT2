@@ -258,6 +258,7 @@ rpwd(MINODE *wd)
         temp[dp->name_len] = '\0'; //Don't append null character
         rpwd(pip);
         printf("/%s", temp);
+        iput(pip);
         return;
       }
       cp += dp->rec_len;  // Move to next record
@@ -502,53 +503,52 @@ int myrmdir()
   int pino = getino(dev, parent);
   MINODE *pip = iget(dev, pino);
   int ino = getino(dev, pathname);
-  MINODE *mip = iget(dev, ino);
+  MINODE *mip;
   if (pathname[0] == 0)
   {
     printf("No such pathname.\n");
-  }
-
-  if(pathname[0] == '/')
-  {
-    mip = root;
-  }
-  else
-  {
-    mip = running->cwd;
+    return;
   }
 
   if(S_ISDIR(pip->INODE.i_mode))
   {
-    if(search(pip, child))
+    if(search(pip, child) != 0)
     {
-      int temp = search(pip, child);
-      mip = iget(dev, temp);
+      int temp1 = search(pip, child);
+      iput(pip);
+      mip = iget(dev, temp1);
       if(mip->refCount > 1)
       {
+        printf("mip->refCount = %d\n", mip->refCount);
         printf("Busy directory\n");
+        iput(mip);
         return;
       }
+
       if(mip->INODE.i_links_count > 2)
       {
         printf("Directory not empty.\n");
         return;
       }
+
       else 
       {
-         for (int i=0; i<12; i++){
-         if (mip->INODE.i_block[i]==0)
+        for (int i=0; i<12; i++)
+        {
+          if (mip->INODE.i_block[i]==0)
              continue;
-         bdealloc(mip->dev, mip->INODE.i_block[i]);
-         idealloc(mip->dev, mip->ino);
-        iput(mip); 
-        pip=iget(mip->dev, pino);
-        rm_child(pip, pathname);
-        pip->INODE.i_links_count --;
-        pip->INODE.i_atime = pip->INODE.i_mtime = time(0L);
-        pip->dirty = 1;
-        iput(pip);
-        return 1;
-         }
+          bdalloc(mip->dev, mip->INODE.i_block[i]);
+          idalloc(mip->dev, mip->ino);
+          iput(mip); 
+          pip=iget(mip->dev, pino);
+          rm_child(pip, pathname);
+          pip->INODE.i_links_count --;
+          pip->INODE.i_atime = pip->INODE.i_mtime = time(0L);
+          pip->dirty = 1;
+          iput(pip);
+          return 1;
+          
+        }
       }
     }
     
@@ -563,6 +563,7 @@ int rm_child(MINODE *parent, char *name)
 {
   char buf[1024];
   char *cp;
+  DIR *dp2 = NULL;
   for(int i = 0; i < 12; i++)
   {
     if (parent->INODE.i_block[i] == 0)
@@ -575,6 +576,7 @@ int rm_child(MINODE *parent, char *name)
     dp = (DIR*)cp;
     while (cp < buf + BLKSIZE)
     {
+
       if (strcmp(name, dp->name) == 0)
       {
         printf("found %s\n", name);
@@ -585,9 +587,13 @@ int rm_child(MINODE *parent, char *name)
         else
         {
           //entry at end of block
+          dp2->rec_len += dp->rec_len;
+          *cp = '/0';
+          put_block(dev, parent->INODE.i_block[i], buf);
         }
         
       }
+      dp2 = dp;
       cp += dp->rec_len;
       dp = (DIR*)cp;
     }

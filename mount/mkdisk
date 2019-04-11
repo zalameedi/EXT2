@@ -1,7 +1,7 @@
 
-dd if=/dev/zero of=mydisk bs=1024 count=1440
-mke2fs -b 1024 mydisk 1440
-mount -o loop mydisk /mnt
+dd if=/dev/zero of=ydisk bs=1024 count=1440
+mke2fs -b 1024 ydisk 1440
+mount -o loop ydisk /mnt
 (cd /mnt; rm -r *; mkdir dir1 dir2; mkdir dir1/dir3; touch file1 file2; ls -l)
 umount /mnt
 

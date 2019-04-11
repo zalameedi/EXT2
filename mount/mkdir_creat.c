@@ -128,7 +128,7 @@ int balloc(int dev)
 
   // read inode_bitmap block
   get_block(dev, bmap, buf);
-
+  
   for (i=0; i < nblocks; i++){
     if (tst_bit(buf, i)==0)
     {
@@ -141,3 +141,5 @@ int balloc(int dev)
   }
   return 0;
 }
+
+int 

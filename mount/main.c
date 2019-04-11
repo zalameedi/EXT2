@@ -27,7 +27,7 @@ char   line[256], cmd[32], pathname[256];
 
 
 #include "util.c"
-#include "cd_ls_pwd.c"
+#include "func.c"
 
 int init()
 {
@@ -62,7 +62,7 @@ int mount_root()
   root = iget(dev, 2);
 }
 
-char *disk = "zdisk";
+char *disk = "ydisk";
 int main(int argc, char *argv[ ])
 {
   int ino;
@@ -147,7 +147,7 @@ int main(int argc, char *argv[ ])
     }
     if(strcmp(cmd, "rmdir") == 0)
     {
-      printf("rm");
+      myrmdir();
     }
     if(strcmp(cmd, "dirinfo"))
     {
