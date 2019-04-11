@@ -595,6 +595,152 @@ int rm_child(MINODE *parent, char *name)
 }
 
 
+int link(char *oldname, char *newname)
+{
+  int i;
+  char parentdir[64];
+  char temp[64], *cp;
+  DIR *dp;
+  int parent;
+  MINODE *pip, *target_ptr;
+
+  if (oldname[i] == '\0')
+  {
+  	printf("Error that file isn't valid.");
+	return -1;
+  }
+  if (newname[0] == '\0')
+  {
+  	printf("Error that file isn't valid.");
+	return -1;
+  }
+
+  cp = strrchr(newname, '/');
+  if(cp == NULL)
+  {
+  parent = running->cwd->ino;
+  strcpy(temp, newname);
+ 
+  }
+  else
+  {
+	*cp = '\0';
+	parent = strcpy(parentdir, newname);
+	pip = getino(dev, parentdir);
+	strcpy(name, cp+1);
+  }
+
+  int target = getino(dev, oldname);
+  if(target == 0)
+  {
+	  printf("Didn't function correctly.\n");
+	  return -1;
+  }
+  if(parent == NULL)
+  {
+	  printf("Didn't function correctly.\n");
+	  return -1;
+  }
+  pip = iget(dev, parent);
+  if(search(&pip->INODE, parent) != 0)
+	{
+	printf("parent doesn't exist, won't work");		
+	return -1;
+	}
+  else
+  {
+	  target_ptr =iget(dev, target);
+	  //Check to see if it's a directory
+	  if(!(S_ISDIR(target_ptr->imode)))
+	  {
+		  printf("Cannot link to a directory.\n");
+		  iput(pip);
+		  return -1;
+  	  }
+
+	  get_block(dev, pip->INODE.i_block[0], buff);
+	  dp = (DIR *) buff;
+	  cp = buff;
+	  while(cp +dp->rec_len < BLKSIZE + buff)
+	  {
+		  cp += dp->rec_len;
+		  dp = (DIR *) cp;
+	  }
+
+	  int need_len = ((4 * ((8 + dp->name_len + 3) / 4)));
+	  int cmp = dp->rec_len - need_len;
+
+	  if(cmp >= need_len)
+	  {
+		  //Must allocate another block
+		  dp->rec_len = 4 * ((8+dp->name_len +3) / 4);
+		  cp = cp + dp->rec_len;
+		  dp = (DIR *) cp;
+		  strcpy(dp->name, name);
+		  dp->rec_len = cmp;
+		  dp->inode = target_ptr->ino;
+		  strncpy(dp->name, temp, dp->name_len);
+		  put_block(fd, pip->INODE.i_block[0], buff);
+
+	  }
+	  else
+	  { 
+		  i=0;
+		  while(tmp < need_len)
+		  {
+			  i++;
+			if(pip->INODE.i_block[0] == 0)
+			{
+				pip->INODE.i_block[0] = balloc(dev);
+				pip->refcount = 0;
+				cmp = 1024;
+				memset(buff, 0, 1024);
+				cp = buff;
+				dp = (DIR *) buff;
+			}
+			else
+			{
+				get_block(dev, pip->INODE.i_block[0], buff);
+				cp = buff;
+				dp = (DIR *) buff;
+				while(cp + dp->rec_len < BLKSIZE + buff)
+				{
+					cp += dp->rec_len;
+					dp = (DIR *) cp;
+				}
+				need_len = ((4* ((8 + dp->name_len + 3) /4)));
+				cmp = dp->rec_len - need_len;
+				if(cmp >= need_len)
+				{
+					dp->rec_len = need_len;
+					cp = cp + dp->rec_len;
+					dp = (DIR *) cp;
+
+
+			}
+
+		  }
+	  }
+		
+	dp->rec_len = cmp;
+	dp->name_len = strlen(temp);
+	dp->inode = target_ptr->ino;
+	strncpy(dp->name, temp, dp->name_len);
+	put_block(fd, pip->INODE.i_block[0], buff);
+
+}
+
+	pip->dirty = 1;
+	pip->refcount += 1;
+	target_ptr->INODE.i_atime = time(0L);
+	iput(target_ptr);
+	return target_ptr -> ino;
+
+}
+
+
+
+
 
 
   
