@@ -149,7 +149,7 @@ int main(int argc, char *argv[ ])
     {
       myrmdir();
     }
-    if(strcmp(cmd, "dirinfo"))
+    if(strcmp(cmd, "dirstats") == 0)
     {
       print_stats(running->cwd);
     }
