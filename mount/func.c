@@ -828,29 +828,22 @@ int mystat(char *pathname)
 	printf("size: %d\n", myst.st_size);
 	printf("blocks: %d\n", myst.st_blocks);
 
-	char cmydate[32], *cs, css[32];
-	char mmydate[32], *ms, mss[32];
-	char amydate[32], *as, ass[32];
+	char *cs, css[32];
+	char *ms, mss[32];
+	char *as, ss[32];
 
-
-	cs = cmydate;
         cs = (char *)ctime(&Ctime);
-        cs = cs + 4;
-        strncpy(css, cs, 12);
-        css[12] = 0;
+        strncpy(css, cs, 24);
+        css[24] = 0;
 	printf("create time: %s\n", css);
-	ms = mmydate;
         ms = (char *)ctime(&mtime);
-        ms = ms + 4;
-        strncpy(mss, ms, 12); //seg fault here
-        mss[12] = 0;
+        strncpy(mss, ms, 24); //seg fault here
+        mss[24] = 0;
 	printf("modify time: %s\n", mss);
-	as = amydate;
         as = (char *)ctime(&atime);
-        as = as + 4;
-        strncpy(ass, as, 12);
-        ass[12] = 0;
-	printf("access time: %s\n", ass);
+        strncpy(ss, as, 24);
+        ss[24] = 0;
+	printf("access time: %s\n", ss);
 }
 
 
