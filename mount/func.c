@@ -561,20 +561,22 @@ int myrmdir()
 
 int rm_child(MINODE *parent, char *name)
 {
-  char buf[1024];
+  char bufr[1024];
   char *cp;
   DIR *dp2 = NULL;
+  int addrem;
+  int start, end;
   for(int i = 0; i < 12; i++)
   {
     if (parent->INODE.i_block[i] == 0)
     {
       printf("couldnt find %s\n", name);
-
+      return 0;	
     }
-    get_block(dev, parent->INODE.i_block[i], buf);
-    cp = buf;
+    get_block(dev, parent->INODE.i_block[i], bufr);
+    cp = bufr;
     dp = (DIR*)cp;
-    while (cp < buf + BLKSIZE)
+    while (cp < bufr + BLKSIZE)
     {
 
       if (strcmp(name, dp->name) == 0)
@@ -583,21 +585,44 @@ int rm_child(MINODE *parent, char *name)
         if (dp->rec_len == (4 * ((8 + dp->name_len + 3 ) / 4)))
         {
           //entry in the middle of block
+		addrem = dp->rec_len;
+		dp2 = (DIR*)cp;
+		cp += dp->rec_len;	
+		dp = (DIR*)cp;
+		start = cp + dp2->rec_len;
+		end = bufr + BLKSIZE;
+		memcpy(dp2, dp, end - start);
+		cp = bufr;
+		dp = (DIR*)cp;
+		while (cp + addrem < bufr + BLKSIZE)
+		{
+			start = dp->rec_len;
+			cp += dp->rec_len;
+			dp = (DIR*)cp;
+		}
+		cp -= start;
+		dp = (DIR*)cp;
+		dp->rec_len += addrem;
+
         }
         else
         {
           //entry at end of block
           dp2->rec_len += dp->rec_len;
-          *cp = '/0';
-          put_block(dev, parent->INODE.i_block[i], buf);
         }
-        
+	put_block(dev, parent->INODE.i_block[i], bufr);
+	//return 1 for success
+        return 1;
       }
       dp2 = dp;
       cp += dp->rec_len;
       dp = (DIR*)cp;
     }
+    
   }
+  
+  //return 0 for failure
+  return 0;
 }
 
 
@@ -655,9 +680,9 @@ int link(char *oldname, char *newname)
 	}
   else
   {
-	  target_ptr =iget(dev, target);
+	  target_ptr = iget(dev, target);
 	  //Check to see if it's a directory
-	  if(!(S_ISDIR(target_ptr->imode)))
+	  if(!(S_ISDIR(target_ptr->INODE.i_mode)))
 	  {
 		  printf("Cannot link to a directory.\n");
 		  iput(pip);
@@ -692,13 +717,13 @@ int link(char *oldname, char *newname)
 	  else
 	  { 
 		  i=0;
-		  while(tmp < need_len)
+		  while(cmp < need_len)
 		  {
 			  i++;
 			if(pip->INODE.i_block[0] == 0)
 			{
 				pip->INODE.i_block[0] = balloc(dev);
-				pip->refcount = 0;
+				pip->refCount = 0;
 				cmp = 1024;
 				memset(buff, 0, 1024);
 				cp = buff;
@@ -737,11 +762,12 @@ int link(char *oldname, char *newname)
 }
 
 	pip->dirty = 1;
-	pip->refcount += 1;
+	pip->refCount += 1;
 	target_ptr->INODE.i_atime = time(0L);
 	iput(target_ptr);
 	return target_ptr -> ino;
 
+}
 }
 
 
