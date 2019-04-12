@@ -382,12 +382,12 @@ int enter_name(MINODE *pip, int myino, char *name)
   int remain = dp->rec_len - (4 * ((8 + dp->name_len + 3 ) / 4));
   if (remain >= ideal_len)
   {
-    printf("dp->name: %s\n", dp->name);
+    //printf("dp->name: %s\n", dp->name);
     dp->rec_len = 4 * ((8 + dp->name_len + 3) / 4);
     cp = cp + dp->rec_len;
     dp = (DIR*) cp;
     strcpy(dp->name, name);
-    printf("dp->name: %s\n", dp->name);
+    //printf("dp->name: %s\n", dp->name);
     dp->name_len = strlen(name);
     dp->rec_len = remain;
     dp->inode = myino;
@@ -400,7 +400,7 @@ int enter_name(MINODE *pip, int myino, char *name)
     dp = (DIR*)cp;
     dp->rec_len = 1024;
     strcpy(dp->name, name);
-    printf("dp->name: %s\n", dp->name);
+    //printf("dp->name: %s\n", dp->name);
     dp->name_len = strlen(name);
     dp->inode = myino;
   }
@@ -453,7 +453,7 @@ int my_creat(MINODE *pip, char *name)
   int ino = ialloc(dev);
   int bno = balloc(dev);
   char *cp;
-  printf("MKDIR ino: %d\n bno: %d\n name: %s\n ", ino, bno, name);
+  printf("CREAT ino: %d\n bno: %d\n name: %s\n ", ino, bno, name);
 
   MINODE *mip = iget(dev, ino);
   mip->INODE.i_mode = 0x81A4;		// OR 040755: DIR type and permissions
@@ -519,7 +519,7 @@ int myrmdir()
       mip = iget(dev, temp1);
       if(mip->refCount > 1)
       {
-        printf("mip->refCount = %d\n", mip->refCount);
+        //printf("mip->refCount = %d\n", mip->refCount);
         printf("Busy directory\n");
         iput(mip);
         return;
