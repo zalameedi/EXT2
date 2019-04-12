@@ -116,7 +116,7 @@ int main(int argc, char *argv[ ])
 
   //printf("hit a key to continue : "); getchar();
   while(1){
-    printf("input command : [ls|cd|pwd|mkdir|creat|dirstats|quit] ");
+    printf("input command : [ls|cd|pwd|mkdir|rmdir|creat|dirstats|link|quit] ");
     fgets(line, 128, stdin);
     line[strlen(line)-1] = 0;
     if (line[0]==0)
@@ -149,9 +149,13 @@ int main(int argc, char *argv[ ])
     {
       myrmdir();
     }
-    if(strcmp(cmd, "dirinfo"))
+    if(strcmp(cmd, "dirstats")==0)
     {
       print_stats(running->cwd);
+    }
+    if(strcmp(cmd, "link" == 0))
+    {
+      break;
     }
   }
 }
