@@ -770,6 +770,28 @@ int link(char *oldname, char *newname)
 }
 }
 
+int stat(char *pathname)
+{
+	struct stat myst;
+	int ino = getino(pathname);
+	MINODE *mip = iget(dev, ino);
+	myst.st_dev = dev;
+	myst.st_ino = ino;
+	myst.st_mode = mip->INODE.i_mode;
+	myst.st_nlink = mip->INODE.i_links_count;
+	myst.st_uid = mip->INODE.i_uid;
+	myst.st_gid = mip->INODE.i_gid;
+	myst.st_size = mip->INODE.i_size;
+	myst.st_blksize = BLKSIZE;
+	myst.st_blocks = mip->INODE.i_blocks;
+	iput(mip);
+	printf("device ID: %d\n", myst.st_dev);
+	printf("inode number: %d\n", myst.st_ino);
+	printf("device: %d\n", myst.st_dev);
+	printf("device ID: %d\n", myst.st_dev);
+	printf("device ID: %d\n", myst.st_dev);
+}
+
 
 
 
