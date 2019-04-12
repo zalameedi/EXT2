@@ -24,7 +24,7 @@ change_dir()
 
   if(pathname[0]=='/')
   {
-    dev = root->dev;
+    dev = root->dev;printf("calculated\n");
   }
   
   if (pathname[0] == 0)
@@ -838,22 +838,19 @@ int mystat(char *pathname)
         cs = cs + 4;
         strncpy(css, cs, 12);
         css[12] = 0;
+	printf("create time: %s\n", css);
 	ms = mmydate;
         ms = (char *)ctime(&mtime);
         ms = ms + 4;
         strncpy(mss, ms, 12); //seg fault here
         mss[12] = 0;
+	printf("modify time: %s\n", mss);
 	as = amydate;
         as = (char *)ctime(&atime);
         as = as + 4;
         strncpy(ass, as, 12);
         ass[12] = 0;
-	
-	
-
 	printf("access time: %s\n", ass);
-	printf("modify time: %s\n", mss);
-	printf("create time: %s\n", css);
 }
 
 
