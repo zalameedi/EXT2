@@ -784,9 +784,9 @@ int mystat(char *pathname)
 	myst.st_size = mip->INODE.i_size;
 	myst.st_blksize = BLKSIZE;
 	myst.st_blocks = mip->INODE.i_blocks;
-	myst.st_atim = (struct timespec)mip->INODE.i_atime;
-	myst.st_mtim = (struct timespec)mip->INODE.i_mtime;
-	myst.st_ctim = (struct timespec)mip->INODE.i_ctime;
+	u32 atime = mip->INODE.i_atime;
+	u32 mtime = mip->INODE.i_mtime;
+	u32 Ctime = mip->INODE.i_ctime;
 	iput(mip);
 	printf("device ID: %d\n", myst.st_dev);
 	printf("inode number: %d\n", myst.st_ino);
@@ -820,16 +820,40 @@ int mystat(char *pathname)
 	        putchar('-');
 	        mask = mask >> 1;
 	   }
-
-	printf("\n");
+	   printf("\n");
+	   
 	printf("links: %d\n", myst.st_nlink);
 	printf("uid: %d\n", myst.st_uid);
 	printf("gid: %d\n", myst.st_gid);
 	printf("size: %d\n", myst.st_size);
 	printf("blocks: %d\n", myst.st_blocks);
-	printf("access time: %s\n", (char *)ctime((time_t)myst.st_atim));
-	printf("modify time: %s\n", (char *)ctime((time_t)myst.st_mtim));
-	printf("create time: %s\n", (char *)ctime((time_t)myst.st_ctim));
+
+	char cmydate[32], *cs, css[32];
+	char mmydate[32], *ms, mss[32];
+	char amydate[32], *as, ass[32];
+
+
+	cs = cmydate;
+        cs = (char *)ctime(&Ctime);
+        cs = cs + 4;
+        strncpy(css, cs, 12);
+        css[12] = 0;
+	ms = mmydate;
+        ms = (char *)ctime(&mtime);
+        ms = ms + 4;
+        strncpy(mss, ms, 12); //seg fault here
+        mss[12] = 0;
+	as = amydate;
+        as = (char *)ctime(&atime);
+        as = as + 4;
+        strncpy(ass, as, 12);
+        ass[12] = 0;
+	
+	
+
+	printf("access time: %s\n", ass);
+	printf("modify time: %s\n", mss);
+	printf("create time: %s\n", css);
 }
 
 
