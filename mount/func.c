@@ -770,10 +770,10 @@ int link(char *oldname, char *newname)
 }
 }
 
-int stat(char *pathname)
+int mystat(char *pathname)
 {
 	struct stat myst;
-	int ino = getino(pathname);
+	int ino = getino(dev, pathname);
 	MINODE *mip = iget(dev, ino);
 	myst.st_dev = dev;
 	myst.st_ino = ino;
@@ -784,12 +784,52 @@ int stat(char *pathname)
 	myst.st_size = mip->INODE.i_size;
 	myst.st_blksize = BLKSIZE;
 	myst.st_blocks = mip->INODE.i_blocks;
+	myst.st_atim = (struct timespec)mip->INODE.i_atime;
+	myst.st_mtim = (struct timespec)mip->INODE.i_mtime;
+	myst.st_ctim = (struct timespec)mip->INODE.i_ctime;
 	iput(mip);
 	printf("device ID: %d\n", myst.st_dev);
 	printf("inode number: %d\n", myst.st_ino);
-	printf("device: %d\n", myst.st_dev);
-	printf("device ID: %d\n", myst.st_dev);
-	printf("device ID: %d\n", myst.st_dev);
+	printf("mode: ");
+	u16 mode = myst.st_mode;
+	  if (S_ISDIR(mode))
+	      putchar('d');
+	  else if (S_ISLNK(mode))
+	      putchar('l');
+	  else
+	      putchar('-');
+	
+	   u16 mask = 000400;
+	   for (int k=0; k<3; k++)
+	   {
+	      if (mode & mask)
+	         putchar('r');
+	      else
+	         putchar('-');
+	      mask = mask >> 1;
+
+	     if (mode & mask)
+	        putchar('w');
+	     else
+	        putchar('-');
+	        mask = mask >> 1;
+
+	     if (mode & mask)
+	        putchar('x');
+	     else
+	        putchar('-');
+	        mask = mask >> 1;
+	   }
+
+	printf("\n");
+	printf("links: %d\n", myst.st_nlink);
+	printf("uid: %d\n", myst.st_uid);
+	printf("gid: %d\n", myst.st_gid);
+	printf("size: %d\n", myst.st_size);
+	printf("blocks: %d\n", myst.st_blocks);
+	printf("access time: %s\n", (char *)ctime((time_t)myst.st_atim));
+	printf("modify time: %s\n", (char *)ctime((time_t)myst.st_mtim));
+	printf("create time: %s\n", (char *)ctime((time_t)myst.st_ctim));
 }
 
 
