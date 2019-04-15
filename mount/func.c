@@ -791,36 +791,6 @@ int mystat(char *pathname)
 	printf("device ID: %d\n", myst.st_dev);
 	printf("inode number: %d\n", myst.st_ino);
 	printf("mode: %o\n", myst.st_mode);
-	//u16 mode = myst.st_mode;
-//	  if (S_ISDIR(mode))
-//	      putchar('d');
-//	  else if (S_ISLNK(mode))
-//	      putchar('l');
-//	  else
-//	      putchar('-');
-//	
-//	   u16 mask = 000400;
-//	   for (int k=0; k<3; k++)
-//	   {
-//	      if (mode & mask)
-//	         putchar('r');
-//	      else
-//	         putchar('-');
-//	      mask = mask >> 1;
-//
-//	     if (mode & mask)
-//	        putchar('w');
-//	     else
-//	        putchar('-');
-//	        mask = mask >> 1;
-//
-//	     if (mode & mask)
-//	        putchar('x');
-//	     else
-//	        putchar('-');
-//	        mask = mask >> 1;
-//	   }
-//	   printf("\n");
 	   
 	printf("links: %d\n", myst.st_nlink);
 	printf("uid: %d\n", myst.st_uid);
@@ -844,6 +814,15 @@ int mystat(char *pathname)
         strncpy(ss, as, 24);
         ss[24] = 0;
 	printf("access time: %s\n", ss);
+}
+
+int chmod(char *pathname, int mode)
+{
+	int ino = getino(dev, pathname);
+	MINODE *mip = iget(dev, ino);
+	mip->INODE.i_mode |= mode;
+	mip->dirty = 1;
+	iput(mip);
 }
 
 
