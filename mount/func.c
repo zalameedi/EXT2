@@ -825,11 +825,11 @@ int chmod(char *pathname, int mode)
 	iput(mip);
 }
 
-
-
-
-
-
-  
-
-
+int utime(char *pathname)
+{
+	int ino = getino(dev, pathname);
+	MINODE *mip = iget(dev, ino);
+	mip_INODE.i_atime = time(0L);
+	mip->dirty = 1;
+	iput(mip);
+}
