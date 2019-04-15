@@ -775,18 +775,18 @@ int mystat(char *pathname)
 	struct stat myst;
 	int ino = getino(dev, pathname);
 	MINODE *mip = iget(dev, ino);
-	memcpy(myst.st_dev, dev, sizeof(dev));
-	memcpy(myst.st_ino, ino, sizeof(ino));
-	memcpy(myst.st_mode, mip->INODE.i_mode, mip->INODE.i_mode);
-	memcpy(myst.st_nlink, mip->INODE.i_links_count, sizeof(mip->INODE.i_links_count));
-	memcpy(myst.st_uid, mip->INODE.i_uid, sizeof(mip->INODE.i_uid));
-	memcpy(myst.st_gid, mip->INODE.i_gid, sizeof(mip->INODE.i_gid));
-	memcpy(myst.st_size, mip->INODE.i_size, sizeof(mip->INODE.i_size));
+	myst.st_dev = dev;
+	myst.st_ino = ino;
+	myst.st_mode = mip->INODE.i_mode;
+	myst.st_nlink = mip->INODE.i_links_count;
+	myst.st_uid = mip->INODE.i_uid;
+	myst.st_gid = mip->INODE.i_gid;
+	myst.st_size = mip->INODE.i_size;
 	myst.st_blksize = BLKSIZE;
-	memcpy(myst.st_blocks, mip->INODE.i_blocks, sizeof(mip->INODE.i_blocks));
-	memcpy(myst.st_atime, mip->INODE.i_atime, sizeof(mip->INODE.i_atime));
-	memcpy(myst.st_mtime, mip->INODE.i_mtime, sizeof(mip->INODE.i_mtime));
-	memcpy(myst.st_ctime, mip->INODE.i_ctime, sizeof(mip->INODE.i_ctime));
+	myst.st_blocks = mip->INODE.i_blocks;
+	myst.st_atime = mip->INODE.i_atime;
+	myst.st_mtime = mip->INODE.i_mtime;
+	myst.st_ctime = mip->INODE.i_ctime;
 	iput(mip);
 	printf("device ID: %d\n", myst.st_dev);
 	printf("inode number: %d\n", myst.st_ino);
@@ -816,7 +816,7 @@ int mystat(char *pathname)
 	printf("access time: %s\n", ss);
 }
 
-int chmod(char *pathname, int mode)
+int mychmod(char *pathname, int mode)
 {
 	int ino = getino(dev, pathname);
 	MINODE *mip = iget(dev, ino);
@@ -829,7 +829,7 @@ int utime(char *pathname)
 {
 	int ino = getino(dev, pathname);
 	MINODE *mip = iget(dev, ino);
-	mip_INODE.i_atime = time(0L);
+	mip->INODE.i_atime = time(0L);
 	mip->dirty = 1;
 	iput(mip);
 }
