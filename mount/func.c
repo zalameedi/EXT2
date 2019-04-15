@@ -775,52 +775,52 @@ int mystat(char *pathname)
 	struct stat myst;
 	int ino = getino(dev, pathname);
 	MINODE *mip = iget(dev, ino);
-	myst.st_dev = dev;
-	myst.st_ino = ino;
-	myst.st_mode = mip->INODE.i_mode;
-	myst.st_nlink = mip->INODE.i_links_count;
-	myst.st_uid = mip->INODE.i_uid;
-	myst.st_gid = mip->INODE.i_gid;
-	myst.st_size = mip->INODE.i_size;
+	memcpy(myst.st_dev, dev, sizeof(dev));
+	memcpy(myst.st_ino, ino, sizeof(ino));
+	memcpy(myst.st_mode, mip->INODE.i_mode, mip->INODE.i_mode);
+	memcpy(myst.st_nlink, mip->INODE.i_links_count, sizeof(mip->INODE.i_links_count));
+	memcpy(myst.st_uid, mip->INODE.i_uid, sizeof(mip->INODE.i_uid));
+	memcpy(myst.st_gid, mip->INODE.i_gid, sizeof(mip->INODE.i_gid));
+	memcpy(myst.st_size, mip->INODE.i_size, sizeof(mip->INODE.i_size));
 	myst.st_blksize = BLKSIZE;
-	myst.st_blocks = mip->INODE.i_blocks;
-	u32 atime = mip->INODE.i_atime;
-	u32 mtime = mip->INODE.i_mtime;
-	u32 Ctime = mip->INODE.i_ctime;
+	memcpy(myst.st_blocks, mip->INODE.i_blocks, sizeof(mip->INODE.i_blocks));
+	memcpy(myst.st_atime, mip->INODE.i_atime, sizeof(mip->INODE.i_atime));
+	memcpy(myst.st_mtime, mip->INODE.i_mtime, sizeof(mip->INODE.i_mtime));
+	memcpy(myst.st_ctime, mip->INODE.i_ctime, sizeof(mip->INODE.i_ctime));
 	iput(mip);
 	printf("device ID: %d\n", myst.st_dev);
 	printf("inode number: %d\n", myst.st_ino);
-	printf("mode: ");
-	u16 mode = myst.st_mode;
-	  if (S_ISDIR(mode))
-	      putchar('d');
-	  else if (S_ISLNK(mode))
-	      putchar('l');
-	  else
-	      putchar('-');
-	
-	   u16 mask = 000400;
-	   for (int k=0; k<3; k++)
-	   {
-	      if (mode & mask)
-	         putchar('r');
-	      else
-	         putchar('-');
-	      mask = mask >> 1;
-
-	     if (mode & mask)
-	        putchar('w');
-	     else
-	        putchar('-');
-	        mask = mask >> 1;
-
-	     if (mode & mask)
-	        putchar('x');
-	     else
-	        putchar('-');
-	        mask = mask >> 1;
-	   }
-	   printf("\n");
+	printf("mode: %o\n", myst.st_mode);
+	//u16 mode = myst.st_mode;
+//	  if (S_ISDIR(mode))
+//	      putchar('d');
+//	  else if (S_ISLNK(mode))
+//	      putchar('l');
+//	  else
+//	      putchar('-');
+//	
+//	   u16 mask = 000400;
+//	   for (int k=0; k<3; k++)
+//	   {
+//	      if (mode & mask)
+//	         putchar('r');
+//	      else
+//	         putchar('-');
+//	      mask = mask >> 1;
+//
+//	     if (mode & mask)
+//	        putchar('w');
+//	     else
+//	        putchar('-');
+//	        mask = mask >> 1;
+//
+//	     if (mode & mask)
+//	        putchar('x');
+//	     else
+//	        putchar('-');
+//	        mask = mask >> 1;
+//	   }
+//	   printf("\n");
 	   
 	printf("links: %d\n", myst.st_nlink);
 	printf("uid: %d\n", myst.st_uid);
@@ -832,15 +832,15 @@ int mystat(char *pathname)
 	char *ms, mss[32];
 	char *as, ss[32];
 
-        cs = (char *)ctime(&Ctime);
+        cs = (char *)ctime(&myst.st_ctime);
         strncpy(css, cs, 24);
         css[24] = 0;
 	printf("create time: %s\n", css);
-        ms = (char *)ctime(&mtime);
+        ms = (char *)ctime(&myst.st_mtime);
         strncpy(mss, ms, 24); //seg fault here
         mss[24] = 0;
 	printf("modify time: %s\n", mss);
-        as = (char *)ctime(&atime);
+        as = (char *)ctime(&myst.st_atime);
         strncpy(ss, as, 24);
         ss[24] = 0;
 	printf("access time: %s\n", ss);
