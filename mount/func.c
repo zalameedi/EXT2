@@ -833,3 +833,268 @@ int utime(char *pathname)
 	mip->dirty = 1;
 	iput(mip);
 }
+
+void my_link(char *path)
+{               
+                int ino;
+                int p_ino;
+		char old[64], new[64], temp[64];
+                char link_parent[64], link_child[64];
+
+                MINODE *mip;
+                MINODE *p_mip; 
+                INODE *ip; 
+                INODE *p_ip; 
+
+                if(!strcmp(path, ""))
+                {
+                                 printf("ERROR: No old file!\n");
+                                return;
+                }
+
+                if(!strcmp(third, ""))
+                {
+                                printf("ERROR: No new file!\n");
+                                return;
+                }
+
+                strcpy(old, path);
+                strcpy(new, third);
+
+                ino = getino(running->cwd, old);
+                mip = iget(dev, ino);
+
+                //file exists
+                if(!mip)
+                {
+                                printf("ERROR: %s does not exist!\n", old);
+                                return;
+                }
+                //is a file
+                if(S_ISDIR(mip->INODE.i_mode))
+                {
+                                printf("ERROR: Can't link a directory!\n");
+                                return;
+                }
+
+                if(!strcmp(new, "/"))
+                {
+                                strcpy(link_parent, "/");
+                }
+                else
+                {
+                                strcpy(temp, new);
+                                strcpy(link_parent, dirname(temp));
+                }
+
+                strcpy(temp, new);
+                strcpy(link_child, basename(temp));
+
+                //get new parent
+                p_ino = getino(running->cwd, link_parent);
+                p_mip = iget(dev, p_ino);
+
+                //parent exist
+                if(!p_mip)
+                {
+                                printf("[!] ERROR - No parent.\n");
+                                return;
+                }
+
+                //parent is dir
+                if(!S_ISDIR(p_mip->INODE.i_mode))
+                {
+                                printf("[!] ERROR - Not a directory.\n");
+                                return;
+                }
+
+                //child already exist
+                if(getino(running->cwd, new))
+                {
+                                printf("[!] ERROR - %s already exists.\n", new);
+                                return;
+                }
+
+                printf("Entering name for %s\n", link_child);
+                enter_name(p_mip, ino, link_child);
+
+                ip = &mip->INODE;
+                ip->i_links_count++;
+                mip->dirty = 1;
+                p_ip = &p_mip->INODE;
+                p_ip->i_atime = time(0L);
+                p_mip->dirty = 1;
+
+                iput(p_mip);
+                iput(mip);
+                return;
+}
+
+void my_symlink(char *path)
+{
+                int ino, i;
+                int link_ino;
+                int parent_ino;
+                char temp[64], parent[64], child[64];
+                char old_name[64];
+
+                MINODE *mip;
+                MINODE *parent_mip;
+                MINODE *link_mip;
+
+                INODE *ip;
+                INODE *parent_ip;
+                INODE *link_ip;
+
+                strcpy(temp, path);
+                strcpy(old_name, basename(temp));
+
+                //old file
+                ino = getino(running->cwd, path);
+                mip = iget(dev, ino);
+
+                if(strlen(path) >= 60) 
+                {
+                                printf("ERROR: Name is too long!\n");
+                                return;
+                }
+
+                if(!mip) //path exists
+                {
+                                printf("ERROR: %s does not exist!\n", path);
+                                return;
+                }
+
+                strcpy(temp, third);
+                strcpy(parent, dirname(temp));
+                strcpy(child, basename(third));
+		
+
+                printf("Parent is %s,  Child is %s\n", parent, child);
+
+                parent_ino = getino(running->cwd, parent);
+                parent_mip = iget(dev, parent_ino);
+
+                if(!parent_mip)
+                {
+                                printf("[!] ERROR - Cannot get parent MIP.\n");
+                                return;
+                }
+
+                if(!S_ISDIR(parent_mip->INODE.i_mode)) //parent is dir
+                {
+                                printf("[!] ERROR - Parent not a directory.\n");
+                                return;
+                }
+
+                if(getino(running->cwd, child) > 0) //child doesn't already exist
+                {
+                                printf("[!] ERROR: %s already exists.\n", child);
+                                return;
+                }
+
+                link_ino = my_creat(parent_mip, child); 
+                link_mip = iget(dev, link_ino);
+                link_ip = &link_mip->INODE;
+
+               
+                link_ip->i_mode = 0120666;
+                link_ip->i_size = strlen(old_name);
+
+                link_mip->dirty = 1;
+                iput(link_mip);
+                iput(mip);
+}
+
+void my_unlink(char *path)
+{
+                int ino, i;
+                int parent_ino;
+
+                MINODE *mip;
+                MINODE *parent_mip;
+                INODE *ip;
+                INODE *parent_ip;
+
+                char temp1[64], temp2[64];
+                char my_dirname[64];
+                char my_basename[64];
+
+		strcpy(temp1, path);
+                strcpy(temp2, path);
+                strcpy(my_dirname, dirname(temp1));
+                strcpy(my_basename, basename(temp2));
+		
+                printf("Dir name is %s\nBasename is %s\n", my_dirname, my_basename);
+
+                //checks
+                if(!path) 
+                {
+                                printf("ERROR: No file name given!\n");
+                                return;
+                }
+
+                ino = getino(running->cwd, path);
+
+                if(ino == 0)
+                {
+                                printf("ERROR: File does not exist!\n");
+                                return;
+                }
+
+                mip = iget(dev, ino);
+
+                if(!mip)
+                {
+                                printf("ERROR: Missing minode!\n");
+                                return;
+                }
+
+                //file
+                if(S_ISDIR(mip->INODE.i_mode))
+                {
+                                printf("ERROR: Can't unlink a directory!\n");
+                                return;
+                }
+
+                printf("Unlinking...\n");
+                ip = &mip->INODE;
+
+
+                
+		ip->i_links_count--; 
+
+
+                printf("Links: %d\n", ip->i_links_count);
+
+                for(i = 0; i < 12 && ip->i_block[i] != 0; i++)
+                {
+                                bdalloc(dev, ip->i_block[i]); //deallocate blocks
+                }
+
+
+                idalloc(dev, ino);          
+
+                //removes file from parent
+                parent_ino = getino(running->cwd, my_dirname);
+                parent_mip = iget(dev, parent_ino);
+                parent_ip = &parent_mip->INODE;
+	
+
+                //removes the child
+                printf("Removing %s from %s\n", my_basename, my_dirname);
+                rm_child(parent_mip, my_basename);
+
+                //update
+		parent_ip->i_links_count--; //REMOVE IF DOESNT WORK
+                parent_ip->i_atime = time(0L);
+                parent_ip->i_mtime = time(0L);
+                parent_mip->dirty = 1;
+                iput(parent_mip);
+                mip->dirty = 1;
+                iput(mip);
+
+                return;
+}
+
+

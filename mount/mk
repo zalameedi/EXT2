@@ -1,6 +1,6 @@
 rm a.out 2> /dev/null
 
-cc main.c 
+cc main.c -w -g 
 
 a.out
 

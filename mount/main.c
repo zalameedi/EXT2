@@ -23,6 +23,7 @@ int    n;          // number of component strings
 int    fd, dev;
 int    nblocks, ninodes, bmap, imap, inode_start;
 char   line[256], cmd[32], pathname[256];
+char third[64];
 
 
 
@@ -116,17 +117,18 @@ int main(int argc, char *argv[ ])
 
   //printf("hit a key to continue : "); getchar();
   while(1){
-    printf("input command : [ls|cd|pwd|mkdir|creat|dirstats|stat|quit] ");
+    printf("input command : [ls|cd|pwd|mkdir|creat|link|unlink|symlink|dirstats|stat|quit] ");
     fgets(line, 128, stdin);
     line[strlen(line)-1] = 0;
     if (line[0]==0)
       continue;
     pathname[0] = 0;
     cmd[0] = 0;
+    third[0] = 0;
 
     
-    sscanf(line, "%s %s", cmd, pathname);
-    printf("cmd=%s pathname=%s\n", cmd, pathname);
+    sscanf(line, "%s %s %s", cmd, pathname, third);
+    printf("cmd=%s arg1=%s arg2=%s\n", cmd, pathname, third);
 
     if (strcmp(cmd, "ls")==0)
        list_file();
@@ -156,6 +158,18 @@ int main(int argc, char *argv[ ])
     if(strcmp(cmd, "stat") == 0)
     {
 	    mystat(pathname);
+    }
+    if(strcmp(cmd, "link") == 0)
+    {
+      link(pathname, third);
+    }
+    if(strcmp(cmd, "unlink") == 0)
+    {
+      my_unlink(pathname);
+    }
+    if(strcmp(cmd, "symlink") == 0)
+    {
+      my_symlink(pathname);
     }
   }
 }
