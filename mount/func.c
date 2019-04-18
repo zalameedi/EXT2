@@ -834,100 +834,56 @@ int utime(char *pathname)
 	iput(mip);
 }
 
-void my_link(char *path)
-{               
-                int ino;
-                int p_ino;
-		char old[64], new[64], temp[64];
-                char link_parent[64], link_child[64];
+int mylink(char *oldFileName, char *newFileName)
+{
+    int oino, nino;
+    MINODE *omip, *pip;
+    char oparent[64], ochild[64];
+    char nparent[64], nchild[64];
 
-                MINODE *mip;
-                MINODE *p_mip; 
-                INODE *ip; 
-                INODE *p_ip; 
+    printf("link oldfile:%s newfile:%s\n", oldFileName, newFileName);
+    dbname(oldFileName, oparent, ochild);
+    printf("oparent:%s ochild:%s\n", oparent, ochild);
 
-                if(!strcmp(path, ""))
-                {
-                                 printf("ERROR: No old file!\n");
-                                return;
-                }
+    oino = getino(dev, ochild);  // to chk if oldFileName is a DIR or not
+    omip = iget(dev, oino);
 
-                if(!strcmp(third, ""))
-                {
-                                printf("ERROR: No new file!\n");
-                                return;
-                }
+    if (getino(dev, newFileName) != 0) {
+        printf("%s already exists\n", newFileName);
+        return 0;
+    }
 
-                strcpy(old, path);
-                strcpy(new, third);
-
-                ino = getino(running->cwd, old);
-                mip = iget(dev, ino);
-
-                //file exists
-                if(!mip)
-                {
-                                printf("ERROR: %s does not exist!\n", old);
-                                return;
-                }
-                //is a file
-                if(S_ISDIR(mip->INODE.i_mode))
-                {
-                                printf("ERROR: Can't link a directory!\n");
-                                return;
-                }
-
-                if(!strcmp(new, "/"))
-                {
-                                strcpy(link_parent, "/");
-                }
-                else
-                {
-                                strcpy(temp, new);
-                                strcpy(link_parent, dirname(temp));
-                }
-
-                strcpy(temp, new);
-                strcpy(link_child, basename(temp));
-
-                //get new parent
-                p_ino = getino(running->cwd, link_parent);
-                p_mip = iget(dev, p_ino);
-
-                //parent exist
-                if(!p_mip)
-                {
-                                printf("[!] ERROR - No parent.\n");
-                                return;
-                }
-
-                //parent is dir
-                if(!S_ISDIR(p_mip->INODE.i_mode))
-                {
-                                printf("[!] ERROR - Not a directory.\n");
-                                return;
-                }
-
-                //child already exist
-                if(getino(running->cwd, new))
-                {
-                                printf("[!] ERROR - %s already exists.\n", new);
-                                return;
-                }
-
-                printf("Entering name for %s\n", link_child);
-                enter_name(p_mip, ino, link_child);
-
-                ip = &mip->INODE;
-                ip->i_links_count++;
-                mip->dirty = 1;
-                p_ip = &p_mip->INODE;
-                p_ip->i_atime = time(0L);
-                p_mip->dirty = 1;
-
-                iput(p_mip);
-                iput(mip);
-                return;
+    if (omip->INODE.i_mode == FILE_MODE) {
+        DIR *dp;    
+        MINODE *nmip;
+        dbname(newFileName, nparent, nchild);
+        nino = getino(dev, nparent);
+        nmip = iget(dev, nino);
+        if (nmip->dev !=  omip->dev) {
+            printf("dev ids don't match - can't link files\n");
+            return 0;
+        }
+        if (nmip->INODE.i_mode != DIR_MODE) {
+            printf("%s(newfile) destination not a dir", nparent);
+            return 0;
+        }
+        
+        omip->dirty = 1;
+        // creat new file with same ino as old file
+        enter_name(nmip, omip->ino, nchild);
+        // increment links count for INODE - same for both files
+        omip->INODE.i_links_count++;
+        iput(omip);
+        iput(nmip);
+        printf("link done\n");
+        return 1;
+    }
+    else if (omip->INODE.i_mode == DIR_MODE) {
+        printf("%s is a DIR: can't link DIRs\n", oldFileName);
+        iput(omip);
+        return 0;
+    }
+    printf("not a FILE\n");
 }
 
 void my_symlink (char *old_file, char *new_file)

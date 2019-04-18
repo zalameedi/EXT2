@@ -25,6 +25,10 @@ int    nblocks, ninodes, bmap, imap, inode_start;
 char   line[256], cmd[32], pathname[256];
 char third[64];
 
+#define DIR_MODE    0x41ED  // default permissions 40755
+#define FILE_MODE   0x81A4  // default permissions 
+
+
 
 
 #include "util.c"
