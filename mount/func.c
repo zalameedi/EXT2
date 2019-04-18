@@ -930,80 +930,74 @@ void my_link(char *path)
                 return;
 }
 
-void my_symlink(char *path)
+void my_symlink (char *old_file, char *new_file)
 {
-                int ino, i;
-                int link_ino;
-                int parent_ino;
-                char temp[64], parent[64], child[64];
-                char old_name[64];
+    int i;
+	int oino, parent_ino;
+	MINODE *omip; //mip will point to the child Inode
+	MINODE *p_mip; //p_mip will point to the parent minode
+	INODE *ip; //ip will point to the child Inode
+	INODE *p_ip; //p_ip will point to the parent inode
+	char temp[64];
+	char child_name[64];
 
-                MINODE *mip;
-                MINODE *parent_mip;
-                MINODE *link_mip;
+	char link_temp[64];
+	char link_parent[64];
+	char link_child[64];
+	int link_pino, link_ino;
+	MINODE *link_pmip, *link_mip;
+	
+	strcpy (temp, old_file);
+	strcpy(child_name, basename(temp));
 
-                INODE *ip;
-                INODE *parent_ip;
-                INODE *link_ip;
+	oino =  getino(dev, old_file);
+	omip = iget(dev, oino);
 
-                strcpy(temp, path);
-                strcpy(old_name, basename(temp));
+	if (strlen(old_file) >= 60)
+	{
+		printf("name too long");
+		return;
+	}
 
-                //old file
-                ino = getino(running->cwd, path);
-                mip = iget(dev, ino);
+	if (!omip)
+	{
+		printf("File doesnt exist");
+	}
+	
+	strcpy(link_temp, new_file);
+	dbname(link_temp, link_parent, link_child);
 
-                if(strlen(path) >= 60) 
-                {
-                                printf("ERROR: Name is too long!\n");
-                                return;
-                }
+	link_pino = getino (dev, link_parent);
+	link_pmip = iget(dev, link_pino);
 
-                if(!mip) //path exists
-                {
-                                printf("ERROR: %s does not exist!\n", path);
-                                return;
-                }
+	if(!link_pmip)
+	{
+		printf("Error! Parent doesnt exist");
+		return;
+	}
+	if(!(S_ISDIR(link_pmip->INODE.i_mode)))
+	{
+		printf("Error! parent is not a directory!");
+		return;
+	}
+	if(getino(dev,link_child)> 0)
+	{
+		printf("child already exists");
+		return;
+	}
+	creat_file(new_file);
+	link_ino = getino(dev,new_file);
+	link_mip = iget(dev, link_ino);
+	link_mip -> INODE.i_mode = 0120777;
+	link_mip -> INODE.i_size =2;
+	link_mip -> dirty = 1;
+	iput(link_mip);
 
-                strcpy(temp, third);
-                strcpy(parent, dirname(temp));
-                strcpy(child, basename(third));
-		
+	link_pmip -> INODE.i_atime = time(0L);
+	link_pmip -> dirty =1;
 
-                printf("Parent is %s,  Child is %s\n", parent, child);
+	iput(link_pmip);
 
-                parent_ino = getino(running->cwd, parent);
-                parent_mip = iget(dev, parent_ino);
-
-                if(!parent_mip)
-                {
-                                printf("[!] ERROR - Cannot get parent MIP.\n");
-                                return;
-                }
-
-                if(!S_ISDIR(parent_mip->INODE.i_mode)) //parent is dir
-                {
-                                printf("[!] ERROR - Parent not a directory.\n");
-                                return;
-                }
-
-                if(getino(running->cwd, child) > 0) //child doesn't already exist
-                {
-                                printf("[!] ERROR: %s already exists.\n", child);
-                                return;
-                }
-
-                link_ino = my_creat(parent_mip, child); 
-                link_mip = iget(dev, link_ino);
-                link_ip = &link_mip->INODE;
-
-               
-                link_ip->i_mode = 0120666;
-                link_ip->i_size = strlen(old_name);
-
-                link_mip->dirty = 1;
-                iput(link_mip);
-                iput(mip);
 }
 
 void my_unlink(char *path)
@@ -1097,4 +1091,12 @@ void my_unlink(char *path)
                 return;
 }
 
+int dbname(char *pathname, char *dname, char *bname)
+{
+    char temp[128]; // dirname(), basename() destroy original pathname
+    strcpy(temp, pathname);
+    strcpy(dname, dirname(temp));
+    strcpy(temp, pathname);
+    strcpy(bname, basename(temp));
+}
 

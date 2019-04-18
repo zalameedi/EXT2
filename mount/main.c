@@ -169,7 +169,7 @@ int main(int argc, char *argv[ ])
     }
     if(strcmp(cmd, "symlink") == 0)
     {
-      my_symlink(pathname);
+      my_symlink(pathname, third);
     }
   }
 }
