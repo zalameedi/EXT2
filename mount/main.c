@@ -121,7 +121,7 @@ int main(int argc, char *argv[ ])
 
   //printf("hit a key to continue : "); getchar();
   while(1){
-    printf("input command : [ls|cd|pwd|mkdir|creat|link|unlink|symlink|dirstats|stat|quit] ");
+    printf("input command : [ls|cd|pwd|mkdir|creat|link|unlink|symlink|dirstats|stat|chmod|utime|quit] ");
     fgets(line, 128, stdin);
     line[strlen(line)-1] = 0;
     if (line[0]==0)
@@ -165,7 +165,7 @@ int main(int argc, char *argv[ ])
     }
     if(strcmp(cmd, "link") == 0)
     {
-      link(pathname, third);
+      mylink(pathname, third);
     }
     if(strcmp(cmd, "unlink") == 0)
     {
@@ -174,6 +174,14 @@ int main(int argc, char *argv[ ])
     if(strcmp(cmd, "symlink") == 0)
     {
       my_symlink(pathname, third);
+    }
+    if (strcmp(cmd, "utime") == 0)
+    {
+	    utime(pathname);
+    }
+    if (strcmp(cmd, "chmod") == 0)
+    {
+	    mychmod(pathname, third);
     }
   }
 }
