@@ -23,9 +23,16 @@ int    n;          // number of component strings
 int    fd, dev;
 int    nblocks, ninodes, bmap, imap, inode_start;
 char   line[256], cmd[32], pathname[256];
+char third[64];
+
+#define DIR_MODE    0x41ED  // default permissions 40755
+#define FILE_MODE   0x81A4  // default permissions 
+
+
+
 
 #include "util.c"
-#include "cd_ls_pwd.c"
+#include "func.c"
 
 int init()
 {
@@ -60,7 +67,7 @@ int mount_root()
   root = iget(dev, 2);
 }
 
-char *disk = "mydisk";
+char *disk = "ydisk";
 int main(int argc, char *argv[ ])
 {
   int ino;
@@ -105,19 +112,27 @@ int main(int argc, char *argv[ ])
   running->cwd = iget(dev, 2);
   
   printf("root refCount = %d\n", root->refCount);
+  // for (int i=0; i < 5; i++){  
+  //   ino = ialloc(fd);
+  //   printf("allocated ino = %d\n", ino);
+  //   int x = balloc(fd);
+  //   printf("THIS IS OUR balloc func value: %d\n", x);
+  // }
 
   //printf("hit a key to continue : "); getchar();
   while(1){
-    printf("input command : [ls|cd|pwd|quit] ");
+    printf("input command : [ls|cd|pwd|mkdir|creat|link|unlink|symlink|dirstats|stat|chmod|utime|quit] ");
     fgets(line, 128, stdin);
     line[strlen(line)-1] = 0;
     if (line[0]==0)
       continue;
     pathname[0] = 0;
     cmd[0] = 0;
+    third[0] = 0;
+
     
-    sscanf(line, "%s %s", cmd, pathname);
-    printf("cmd=%s pathname=%s\n", cmd, pathname);
+    sscanf(line, "%s %s %s", cmd, pathname, third);
+    printf("cmd=%s arg1=%s arg2=%s\n", cmd, pathname, third);
 
     if (strcmp(cmd, "ls")==0)
        list_file();
@@ -128,6 +143,46 @@ int main(int argc, char *argv[ ])
 
     if (strcmp(cmd, "quit")==0)
        quit();
+    if (strcmp(cmd, "mkdir") == 0)
+    {
+      dmkdir();
+    }
+    if(strcmp(cmd, "creat") == 0)
+    {
+      creat_file();
+    }
+    if(strcmp(cmd, "rmdir") == 0)
+    {
+      myrmdir();
+    }
+    if(strcmp(cmd, "dirstats") == 0)
+    {
+      print_stats(running->cwd);
+    }
+    if(strcmp(cmd, "stat") == 0)
+    {
+	    mystat(pathname);
+    }
+    if(strcmp(cmd, "link") == 0)
+    {
+      mylink(pathname, third);
+    }
+    if(strcmp(cmd, "unlink") == 0)
+    {
+      my_unlink(pathname);
+    }
+    if(strcmp(cmd, "symlink") == 0)
+    {
+      my_symlink(pathname, third);
+    }
+    if (strcmp(cmd, "utime") == 0)
+    {
+	    utime(pathname);
+    }
+    if (strcmp(cmd, "chmod") == 0)
+    {
+	    mychmod(pathname, third);
+    }
   }
 }
  
@@ -135,10 +190,13 @@ int quit()
 {
   int i;
   MINODE *mip;
-  for (i=0; i<NMINODE; i++){
+  for (i=0; i<NMINODE; i++)
+  {
     mip = &minode[i];
     if (mip->refCount > 0)
+    {
       iput(mip);
+    }
   }
   exit(0);
 }
