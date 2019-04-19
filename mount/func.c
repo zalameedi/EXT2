@@ -816,11 +816,12 @@ int mystat(char *pathname)
 	printf("access time: %s\n", ss);
 }
 
-int mychmod(char *pathname, int mode)
+int mychmod(char *pathname, char *mode)
 {
+  int _mode = atoi(mode);
 	int ino = getino(dev, pathname);
 	MINODE *mip = iget(dev, ino);
-	mip->INODE.i_mode |= mode;
+	mip->INODE.i_mode |= _mode;
 	mip->dirty = 1;
 	iput(mip);
 }
