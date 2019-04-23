@@ -1056,9 +1056,52 @@ int dbname(char *pathname, char *dname, char *bname)
     strcpy(bname, basename(temp));
 }
 
-int open_file(char *pathname)
+int open_file(char *pathname, int mode)
 {
 	int ino = getino(dev, pathname);
+	if (ino == 0)
+	{
+		creat_file(pathname);
+		ino = getino(dev, pathname); 
+	}
 	MINODE *mip = iget(dev, ino);
-
+	OFT temp;
+	temp.mode = mode;
+	temp.mptr = mip;
+	if (mode == 0 || mode == 1 || mode == 2)
+	{
+		if(mode == 1)
+		{
+			truncate(mip, ino);
+		}
+		temp.offset = 0;
+	}
+	else if(mode == 3)
+	{
+		temp.offset = mip->INODE.i_size;
+	}
+	else
+	{
+		printf("invalid mode\n");
+		return -1;
+	}
+	int i = 0;
+	while(running->fd[i] != 0 || i < 8)
+	{
+		i++;
+	}
+	if (i == 8)
+	{
+		printf("no free fd\n");
+		return -1;
+	}
+	fd[i] = &temp;
+	mip->INODE.a_time = time(0L);
+	if (mode != 0)
+	{
+		mip->INODE.m_time = time(0L);
+	}
+	mip->dirty = 1;
+	iput(mip);
+	return i;
 }
