@@ -1088,7 +1088,7 @@ int open_file(char *pathname, char *_mode)
 		return -1;
 	}
 	int i = 0;
-	while(running->fd[i] != 0 || i < 8)
+	while(i < 8 && running->fd[i] != NULL)
 	{
 		i++;
 	}
@@ -1159,30 +1159,16 @@ int my_lseek(char *_fid, char *_position)
 
 int pfd()
 {
+	int mode;
 	printf(" fd   mode   offset   INODE\n");
 	printf("----  -----  -------  ------\n");
-	int mode, ino;
-	char smode[8];
-	for (int i = 0; i < 8 || running->fd[i] != 0; i++)
+	for (int i = 0; i < 8; i++)
 	{
-		mode = running->fd[i]->mode;
-		if (mode == 0)
+		if (running->fd[i] != NULL)
 		{
-			strcpy(smode, "READ");
+			mode = running->fd[i]->mode;
+			printf("%d  %s  %d  [%d, %d]\n", i, modes[mode], running->fd[i]->offset, running->fd[i]->mptr->dev, running->fd[i]->mptr->ino);
 		}
-		else if (mode == 1)
-		{
-			strcpy(smode, "WRITE");
-		}
-		else if (mode == 2)
-		{
-			strcpy(smode, "RW");
-		}
-		else if (mode == 3)
-		{
-			strcpy(smode, "APPEND");
-		} 
-		printf("%d  %s  %d  [%d, %d]\n", i, smode, running->fd[i]->offset, running->fd[i]->mptr->dev, running->fd[i]->mptr->ino);
 	}
 
 }
