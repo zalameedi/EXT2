@@ -818,10 +818,10 @@ int mystat(char *pathname)
 
 int mychmod(char *pathname, char *mode)
 {
-  int _mode = atoi(mode);
+	long int _mode = strtol(mode, NULL, 8);
 	int ino = getino(dev, pathname);
 	MINODE *mip = iget(dev, ino);
-	mip->INODE.i_mode |= _mode;
+	mip->INODE.i_mode = (mip->INODE.i_mode & 0xF000) | _mode;
 	mip->dirty = 1;
 	iput(mip);
 }
@@ -1018,34 +1018,31 @@ void my_unlink(char *path)
 
 
                 printf("Links: %d\n", ip->i_links_count);
+
 		if (ip->i_links_count == 0)
 		{
                 	truncate(ip, ino);         
+		}
 
-                	//removes file from parentmmmm
-			if (strcmp(my_dirname, ".") == 0)
-			{
-				strcpy(my_dirname, "/");
-			}
+                //removes file from parentmmmm
 
-                	parent_ino = getino(running->cwd, my_dirname);
-                	parent_mip = iget(dev, parent_ino);
-                	parent_ip = &parent_mip->INODE;
+               	parent_ino = getino(running->cwd, my_dirname);
+               	parent_mip = iget(dev, parent_ino);
+               	parent_ip = &parent_mip->INODE;
 	
 
-               		//removes the child
-                	printf("Removing %s from %s\n", my_basename, my_dirname);
-                	rm_child(parent_mip, my_basename);
+             	//removes the child
+               	printf("Removing %s from %s\n", my_basename, my_dirname);
+               	rm_child(parent_mip, my_basename);
 
-                	//update
-			parent_ip->i_links_count--; //REMOVE IF DOESNT WORK
-                	parent_ip->i_atime = time(0L);
-                	parent_ip->i_mtime = time(0L);
-                	parent_mip->dirty = 1;
-                	iput(parent_mip);
-                	mip->dirty = 1;
-                	iput(mip);
-		}
+               	//update
+		parent_ip->i_links_count--; //REMOVE IF DOESNT WORK
+               	parent_ip->i_atime = time(0L);
+               	parent_ip->i_mtime = time(0L);
+               	parent_mip->dirty = 1;
+               	iput(parent_mip);
+               	mip->dirty = 1;
+               	iput(mip);
 
                 return;
 }
