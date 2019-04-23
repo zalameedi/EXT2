@@ -1056,8 +1056,9 @@ int dbname(char *pathname, char *dname, char *bname)
     strcpy(bname, basename(temp));
 }
 
-int open_file(char *pathname, int mode)
+int open_file(char *pathname, char *_mode)
 {
+	int mode = atoi(_mode);
 	int ino = getino(dev, pathname);
 	if (ino == 0)
 	{
@@ -1106,8 +1107,9 @@ int open_file(char *pathname, int mode)
 	return i;
 }
 
-int close_file(int fid)
+int close_file(char *_fid)
 {
+	int fid = atoi(_fid);
 	if (fid > 7 || fid < 0)
 	{
 		printf("fd out of range\n");
@@ -1127,4 +1129,61 @@ int close_file(int fid)
 	MINODE *mip = oftp->mptr;
 	iput(mip);
 	return 0;
+}
+
+int my_lseek(char *_fid, char *_position)
+{
+	int fid = atoi(_fid);
+	int position = atoi(_postion);
+	if (fid > 7 || fid < 0)
+	{
+		printf("fd out of range\n");
+		return -1;
+	}
+	if (!running->fd[fid])
+	{
+		printf("fd not pointing at OFT entry\n");
+		return -1;
+	}
+
+	OFT *oftp = running->fd[fid];
+	if (position < 0 || position > oftp->mptr.INODE.i_size)
+	{
+		printf("invalid offset\n");
+		return -1;
+	}
+	int originalPos = oftp->offset;
+	oftp->offset = position;
+	return originalPos;
+}
+
+int pfd()
+{
+	printf(" fd   mode   offset   INODE\n");
+	printf("----  -----  -------  ------\n");
+	int mode, ino;
+	char smode[8];
+	for (int i = 0; i < 8 || running->fd[i] != 0; i++)
+	{
+		mode = running->fd[i].mode;
+		if (mode == 0)
+		{
+			strcpy(smode, "READ");
+		}
+		else if (mode == 1)
+		{
+			strcpy(smode, "WRITE");
+		}
+		else if (mode == 2)
+		{
+			strcpy(smode, "RW");
+		}
+		else if (mode == 3)
+		{
+			strcpy(smode, "APPEND");
+		}
+		ino = getino(dev, 
+		printf("%d  %s  %d  [%d, %d]\n", i, smode, running->fd[i].offset, running->fd[i].mptr->dev, running->fd[i].mptr->ino);
+	}
+
 }

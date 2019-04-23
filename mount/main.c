@@ -183,6 +183,22 @@ int main(int argc, char *argv[ ])
     {
 	    mychmod(pathname, third);
     }
+    if (strcmp(cmd, "open") == 0)
+    {
+	    open_file(pathname, third);
+    }
+    if (strcmp(cmd, "close") == 0)
+    {
+	    close_file(pathname);
+    }
+    if (strcmp(cmd, "lseek") == 0)
+    {
+	my_lseek(pathname, third);
+    }
+    if (strcmo(cmd, "pfd") == 0)
+    {
+	pfd();
+    }
   }
 }
  
