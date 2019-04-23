@@ -1097,13 +1097,13 @@ int open_file(char *pathname, char *_mode)
 		printf("no free fd\n");
 		return -1;
 	}
-	fd[i] = &temp;
-	mip->INODE.a_time = time(0L);
+	running->fd[i] = &temp;
+	mip->INODE.i_atime = time(0L);
 	if (mode != 0)
 	{
-		mip->INODE.m_time = time(0L);
+		mip->INODE.i_mtime = time(0L);
 	}
-	mip->dirty = 1;`
+	mip->dirty = 1;
 	return i;
 }
 
@@ -1134,7 +1134,7 @@ int close_file(char *_fid)
 int my_lseek(char *_fid, char *_position)
 {
 	int fid = atoi(_fid);
-	int position = atoi(_postion);
+	int position = atoi(_position);
 	if (fid > 7 || fid < 0)
 	{
 		printf("fd out of range\n");
@@ -1147,7 +1147,7 @@ int my_lseek(char *_fid, char *_position)
 	}
 
 	OFT *oftp = running->fd[fid];
-	if (position < 0 || position > oftp->mptr.INODE.i_size)
+	if (position < 0 || position > oftp->mptr->INODE.i_size)
 	{
 		printf("invalid offset\n");
 		return -1;
@@ -1165,7 +1165,7 @@ int pfd()
 	char smode[8];
 	for (int i = 0; i < 8 || running->fd[i] != 0; i++)
 	{
-		mode = running->fd[i].mode;
+		mode = running->fd[i]->mode;
 		if (mode == 0)
 		{
 			strcpy(smode, "READ");
@@ -1181,9 +1181,8 @@ int pfd()
 		else if (mode == 3)
 		{
 			strcpy(smode, "APPEND");
-		}
-		ino = getino(dev, 
-		printf("%d  %s  %d  [%d, %d]\n", i, smode, running->fd[i].offset, running->fd[i].mptr->dev, running->fd[i].mptr->ino);
+		} 
+		printf("%d  %s  %d  [%d, %d]\n", i, smode, running->fd[i]->offset, running->fd[i]->mptr->dev, running->fd[i]->mptr->ino);
 	}
 
 }

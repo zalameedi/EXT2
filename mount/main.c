@@ -121,7 +121,7 @@ int main(int argc, char *argv[ ])
 
   //printf("hit a key to continue : "); getchar();
   while(1){
-    printf("input command : [ls|cd|pwd|mkdir|creat|link|unlink|symlink|dirstats|stat|chmod|utime|quit] ");
+    printf("input command : [ls|cd|pwd|mkdir|creat|link|unlink|symlink|dirstats|stat|chmod|utime|open|close|lseek|pfd|quit] ");
     fgets(line, 128, stdin);
     line[strlen(line)-1] = 0;
     if (line[0]==0)
@@ -195,7 +195,7 @@ int main(int argc, char *argv[ ])
     {
 	my_lseek(pathname, third);
     }
-    if (strcmo(cmd, "pfd") == 0)
+    if (strcmp(cmd, "pfd") == 0)
     {
 	pfd();
     }
