@@ -1068,6 +1068,7 @@ int open_file(char *pathname, int mode)
 	OFT temp;
 	temp.mode = mode;
 	temp.mptr = mip;
+	temp.refCount = 1;
 	if (mode == 0 || mode == 1 || mode == 2)
 	{
 		if(mode == 1)
@@ -1101,7 +1102,29 @@ int open_file(char *pathname, int mode)
 	{
 		mip->INODE.m_time = time(0L);
 	}
-	mip->dirty = 1;
-	iput(mip);
+	mip->dirty = 1;`
 	return i;
+}
+
+int close_file(int fid)
+{
+	if (fid > 7 || fid < 0)
+	{
+		printf("fd out of range\n");
+		return -1;
+	}
+	if (!running->fd[fid])
+	{
+		printf("fd not pointing at OFT entry\n");
+		return -1;
+	}
+	OFT *oftp = running->fd[fid];
+	running->fd[fid] = 0;
+	oftp->refCount--;
+	if (oftp->refCount > 0)
+		return 0;
+
+	MINODE *mip = oftp->mptr;
+	iput(mip);
+	return 0;
 }
