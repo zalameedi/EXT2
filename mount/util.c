@@ -299,3 +299,37 @@ int decFreeblocks(int dev)
   put_block(dev, 2, (char *)gp);
 }
 
+int truncate(INODE *ip, int ino)
+{
+	for (int i = 0; i < 12 && ip->i_block[i] != 0; i++)
+	{
+		if (ip->i_block[i] != 0)
+			bdalloc(dev, ip->i_block[i]);
+		else
+			return;
+	}
+	int blockt[BLKSIZE];
+	get_block(dev, ip->i_block[12], blockt);
+	for (int i = 0; i < 256 || blockt[i] != 0; i++)
+	{
+		if (blockt[i] != 0)
+			bdalloc(dev, blockt[i]);
+		else
+			return;
+	}
+	int blockt2[BLKSIZE];
+	get_block(dev, ip->i_block[13], blockt);
+	for (int i = 0; i < 256 || blockt[i] != 0; i++)
+	{
+		get_block(dev, blockt[i], blockt2);
+		for (int j = 0; j < 256 || blockt2[j] != 0; j++)
+		{
+			if (blockt2[j] != 0)
+				bdalloc(dev, blockt2[j]);
+			else
+				return;
+		}
+	}
+	idalloc(dev, ino);
+}
+

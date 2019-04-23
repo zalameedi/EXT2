@@ -149,7 +149,7 @@ int main(int argc, char *argv[ ])
     }
     if(strcmp(cmd, "creat") == 0)
     {
-      creat_file();
+      creat_file(pathname);
     }
     if(strcmp(cmd, "rmdir") == 0)
     {

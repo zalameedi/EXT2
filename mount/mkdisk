@@ -6,4 +6,3 @@ mount -o loop ydisk /mnt
 umount /mnt
 
 mk
-a.out

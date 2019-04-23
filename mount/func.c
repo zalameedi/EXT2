@@ -407,7 +407,7 @@ int enter_name(MINODE *pip, int myino, char *name)
   put_block(dev, pip->INODE.i_block[i], buf);
 }
 
-int creat_file()
+int creat_file(char *pathname)
 {
    MINODE *mip = running->cwd;
   if(pathname[0] == '/')
@@ -947,6 +947,7 @@ void my_symlink (char *old_file, char *new_file)
 	link_mip = iget(dev, link_ino);
 	link_mip -> INODE.i_mode = 0120777;
 	link_mip -> INODE.i_size =2;
+	strcpy((char*)link_mip -> INODE.i_block, old_file);
 	link_mip -> dirty = 1;
 	iput(link_mip);
 
@@ -1017,33 +1018,34 @@ void my_unlink(char *path)
 
 
                 printf("Links: %d\n", ip->i_links_count);
+		if (ip->i_links_count == 0)
+		{
+                	truncate(ip, ino);         
 
-                for(i = 0; i < 12 && ip->i_block[i] != 0; i++)
-                {
-                                bdalloc(dev, ip->i_block[i]); //deallocate blocks
-                }
+                	//removes file from parentmmmm
+			if (strcmp(my_dirname, ".") == 0)
+			{
+				strcpy(my_dirname, "/");
+			}
 
-
-                idalloc(dev, ino);          
-
-                //removes file from parent
-                parent_ino = getino(running->cwd, my_dirname);
-                parent_mip = iget(dev, parent_ino);
-                parent_ip = &parent_mip->INODE;
+                	parent_ino = getino(running->cwd, my_dirname);
+                	parent_mip = iget(dev, parent_ino);
+                	parent_ip = &parent_mip->INODE;
 	
 
-                //removes the child
-                printf("Removing %s from %s\n", my_basename, my_dirname);
-                rm_child(parent_mip, my_basename);
+               		//removes the child
+                	printf("Removing %s from %s\n", my_basename, my_dirname);
+                	rm_child(parent_mip, my_basename);
 
-                //update
-		parent_ip->i_links_count--; //REMOVE IF DOESNT WORK
-                parent_ip->i_atime = time(0L);
-                parent_ip->i_mtime = time(0L);
-                parent_mip->dirty = 1;
-                iput(parent_mip);
-                mip->dirty = 1;
-                iput(mip);
+                	//update
+			parent_ip->i_links_count--; //REMOVE IF DOESNT WORK
+                	parent_ip->i_atime = time(0L);
+                	parent_ip->i_mtime = time(0L);
+                	parent_mip->dirty = 1;
+                	iput(parent_mip);
+                	mip->dirty = 1;
+                	iput(mip);
+		}
 
                 return;
 }
@@ -1057,3 +1059,9 @@ int dbname(char *pathname, char *dname, char *bname)
     strcpy(bname, basename(temp));
 }
 
+int open_file(char *pathname)
+{
+	int ino = getino(dev, pathname);
+	MINODE *mip = iget(dev, ino);
+
+}
