@@ -1124,10 +1124,10 @@ int close_file(char *_fid)
 	OFT *oftp = running->fd[fid];
 	running->fd[fid] = 0;
 	oftp->refCount--;
-	if (oftp->refCount > 0)
+	if (oftp->mptr->refCount > 0)
 		return 0;
 
-  if(oftp->mptr->refCount == 0)
+  if(oftp->refCount == 0)
 	  iput(oftp->mptr->refCount);
 
   printf("File closed.\n");  
