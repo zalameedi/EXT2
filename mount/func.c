@@ -1204,7 +1204,6 @@ int myread(int fd, char *buf, int nbytes)
   int avail = running->fd[fd]->mptr->INODE.i_size - running->fd[fd]->offset;
   int count = 0;
   char *cq = buf;
-  char *cp;
   char readbuf[BLKSIZE];
   char idbuf[BLKSIZE], ddbuf[BLKSIZE];
   while (nbytes && avail)
@@ -1232,7 +1231,7 @@ int myread(int fd, char *buf, int nbytes)
     }
 
     get_block(running->fd[fd]->mptr->dev, blk, readbuf);
-    *cp = readbuf + start;
+    char *cp = readbuf + start;
     remain = BLKSIZE - start;
 
     if (remain > nbytes)
@@ -1245,7 +1244,7 @@ int myread(int fd, char *buf, int nbytes)
     }
     
 
-    memcpy(cq, cp, opt);
+    memmove(cq, cp, opt);
     *cq += opt; // unsure this is correct
     count += opt;
     avail -= opt;
@@ -1263,10 +1262,12 @@ int myread(int fd, char *buf, int nbytes)
 
 int my_cat(char *pathname)
 {
-  char mybuf[BLKSIZE], dummy = 0;
+  char mybuf[BLKSIZE+1]; 
+  char dummy = 0;
   int n;
   int fd = open_file(pathname, "0");
-  while (n = myread(fd, mybuf[1024], 1024))
+  printf("We got this far...\n");
+  while (n = myread(fd, mybuf, 1024))
   {
     mybuf[n] = 0;
     for (int i = 0; i < BLKSIZE; i++)
