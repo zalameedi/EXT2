@@ -1199,8 +1199,7 @@ int read_file()
 
 int myread(int fd, char *buf, int nbytes)
 {
-  int start, lbk, blk, cur, cur2, opt;
-  int remain = BLKSIZE - start;
+  int start, lbk, blk, cur, cur2, opt, remain;
   int avail = running->fd[fd]->mptr->INODE.i_size - running->fd[fd]->offset;
   int count = 0;
   char *cq = buf;
@@ -1266,11 +1265,10 @@ int my_cat(char *pathname)
   char dummy = 0;
   int n;
   int fd = open_file(pathname, "0");
-  printf("We got this far...\n");
   while (n = myread(fd, mybuf, 1024))
   {
     mybuf[n] = 0;
-    for (int i = 0; i < BLKSIZE; i++)
+    for (int i = 0; i <= BLKSIZE; i++)
     {
       if (mybuf[i] == '\0')
       {
