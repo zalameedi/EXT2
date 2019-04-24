@@ -1103,6 +1103,7 @@ int open_file(char *pathname, char *_mode)
 	{
 		mip->INODE.i_mtime = time(0L);
 	}
+  printf("File opened.\n");
 	mip->dirty = 1;
 	return i;
 }
@@ -1126,8 +1127,10 @@ int close_file(char *_fid)
 	if (oftp->refCount > 0)
 		return 0;
 
-	MINODE *mip = oftp->mptr;
-	iput(mip);
+  if(oftp->mptr->refCount == 0)
+	  iput(oftp->mptr->refCount);
+
+  printf("File closed.\n");  
 	return 0;
 }
 
@@ -1167,8 +1170,8 @@ int pfd()
 		if (running->fd[i] != NULL)
 		{
 			mode = running->fd[i]->mode;
-			printf("%d  %s  %d  [%d, %d]\n", i, modes[mode], running->fd[i]->offset, running->fd[i]->mptr->dev, running->fd[i]->mptr->ino);
+			printf("%d  %d  %d  [%d, %d]\n", i, modes[mode], running->fd[i]->offset, running->fd[i]->mptr->dev, running->fd[i]->mptr->ino);
 		}
 	}
-
 }
+
