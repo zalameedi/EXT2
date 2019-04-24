@@ -1266,7 +1266,7 @@ int my_cat(char *pathname)
   char mybuf[BLKSIZE], dummy = 0;
   int n;
   int fd = open_file(pathname, "0");
-  while (n = read(fd, mybuf[1024], 1024))
+  while (n = myread(fd, mybuf[1024], 1024))
   {
     mybuf[n] = 0;
     for (int i = 0; i < BLKSIZE; i++)
