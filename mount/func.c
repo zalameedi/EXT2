@@ -1223,9 +1223,9 @@ int myread(int fd, char *buf, int nbytes)
     {
       // double indirect blocks
       get_block(running->fd[fd]->mptr->dev, running->fd[fd]->mptr->INODE.i_block[13], idbuf);
-      cur = 65536 / (lbk - 268);
+      cur = (lbk - 268) / 256;
       get_block(running->fd[fd]->mptr->dev, idbuf[cur], ddbuf);
-      cur2 = 65536 % (lbk - 268);
+      cur2 = (lbk - 268) % 256;
       blk = ddbuf[cur2];
     }
 
@@ -1244,7 +1244,7 @@ int myread(int fd, char *buf, int nbytes)
     
 
     memmove(cq, cp, opt);
-    *cq += opt; // unsure this is correct
+    //*cq += opt; // unsure this is correct
     count += opt;
     avail -= opt;
     nbytes -= opt;
@@ -1268,7 +1268,7 @@ int my_cat(char *pathname)
   while (n = myread(fd, mybuf, 1024))
   {
     mybuf[n] = 0;
-    for (int i = 0; i <= BLKSIZE; i++)
+    for (int i = 0; i < BLKSIZE; i++)
     {
       if (mybuf[i] == '\0')
       {
@@ -1276,6 +1276,6 @@ int my_cat(char *pathname)
       }
       printf("%c", mybuf[i]);
     }
-    close_file(fd);
   }
+  close_file(fd);
 }
