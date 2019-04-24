@@ -15,6 +15,7 @@
 MINODE minode[NMINODE];
 MINODE *root;
 PROC   proc[NPROC], *running;
+OFT ofttable[NOFT];
 
 char   gpath[256]; // global for tokenized components
 char   *name[64];  // assume at most 64 components in pathname
@@ -58,6 +59,10 @@ int init()
     p->status = FREE;
     for (j=0; j<NFD; j++)
       p->fd[j] = 0;
+  }
+  for (i = 0; i<NOFT; i++)
+  {
+    ofttable[i].refCount = 0;
   }
 }
 

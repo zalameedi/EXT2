@@ -1087,7 +1087,7 @@ int open_file(char *pathname, char *_mode)
 		printf("invalid mode\n");
 		return -1;
 	}
-	int i = 0;
+	int i = 0, j;
 	while(i < 8 && running->fd[i] != NULL)
 	{
 		i++;
@@ -1097,7 +1097,15 @@ int open_file(char *pathname, char *_mode)
 		printf("no free fd\n");
 		return -1;
 	}
-	running->fd[i] = &temp;
+  for (j = 0; j < NOFT; j++)
+  {
+    if (ofttable[j].refCount == 0)
+    {
+      ofttable[j] = temp;
+      break;
+    }
+  }
+	running->fd[i] = &ofttable[j];
 	mip->INODE.i_atime = time(0L);
 	if (mode != 0)
 	{
@@ -1170,7 +1178,7 @@ int pfd()
 		if (running->fd[i] != NULL)
 		{
 			mode = running->fd[i]->mode;
-			printf("%d  %d  %d  [%d, %d]\n", i, modes[mode], running->fd[i]->offset, running->fd[i]->mptr->dev, running->fd[i]->mptr->ino);
+			printf("%3d%8s  %5d   [%d, %d]\n", i, modes[mode], running->fd[i]->offset, running->fd[i]->mptr->dev, running->fd[i]->mptr->ino);
 		}
 	}
 }

@@ -1,8 +1,8 @@
 rm a.out 2> /dev/null
 
-cc main.c -w -g 
+gcc main.c -w -g -o /home/dara/Documents/360works/lab7/EXT2/mount/a.out
 
-a.out
+/home/dara/Documents/360works/lab7/EXT2/mount/a.out
 
 
 
