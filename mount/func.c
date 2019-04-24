@@ -1207,7 +1207,11 @@ int myread(int fd, char *buf, int nbytes)
   int count = 0;
   char *cq = buf;
   char readbuf[BLKSIZE];
-  char idbuf[BLKSIZE], ddbuf[BLKSIZE];
+  u32 idbuf[256], ddbuf[256];
+  if (avail < nbytes)
+  {
+    nbytes = avail;
+  }
   while (nbytes && avail)
   {
     start = running->fd[fd]->offset % BLKSIZE;
@@ -1234,7 +1238,7 @@ int myread(int fd, char *buf, int nbytes)
 
     get_block(running->fd[fd]->mptr->dev, blk, readbuf);
     char *cp = readbuf + start;
-    remain = avail - start;
+    remain = BLKSIZE - start;
 
     if (remain > nbytes)
     {
@@ -1271,13 +1275,13 @@ int my_cat(char *pathname)
   while (n = myread(fd, mybuf, 1024))
   {
     mybuf[n] = 0;
-    for (int i = 0; i < BLKSIZE; i++)
+    for (int i = 0; i < n; i++)
     {
-      if (mybuf[i] == '\0')
+      if (mybuf[i] == '\n')
       {
-        break;
+        putchar('\r');
       }
-      printf("%c", mybuf[i]);
+      putchar(mybuf[i]);
     }
   }
   char _fd[10];
