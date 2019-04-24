@@ -1119,6 +1119,7 @@ int open_file(char *pathname, char *_mode)
 int close_file(char *_fid)
 {
 	int fid = atoi(_fid);
+  MINODE *mip;
 	if (fid > 7 || fid < 0)
 	{
 		printf("fd out of range\n");
@@ -1132,11 +1133,13 @@ int close_file(char *_fid)
 	OFT *oftp = running->fd[fid];
 	running->fd[fid] = 0;
 	oftp->refCount--;
-	if (oftp->mptr->refCount > 0)
+	if (oftp->refCount > 0)
 		return 0;
 
+  mip = oftp->mptr;
+
   if(oftp->refCount == 0)
-	  iput(oftp->mptr->refCount);
+	  iput(mip);
 
   printf("File closed.\n");  
 	return 0;
@@ -1231,7 +1234,7 @@ int myread(int fd, char *buf, int nbytes)
 
     get_block(running->fd[fd]->mptr->dev, blk, readbuf);
     char *cp = readbuf + start;
-    remain = BLKSIZE - start;
+    remain = avail - start;
 
     if (remain > nbytes)
     {
@@ -1277,5 +1280,7 @@ int my_cat(char *pathname)
       printf("%c", mybuf[i]);
     }
   }
-  close_file(fd);
+  char _fd[10];
+  sprintf(_fd, "%d", fd);
+  close_file(_fd);
 }
