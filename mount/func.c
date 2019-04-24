@@ -1178,8 +1178,105 @@ int pfd()
 		if (running->fd[i] != NULL)
 		{
 			mode = running->fd[i]->mode;
-			printf("%3d%8s  %5d   [%d, %d]\n", i, modes[mode], running->fd[i]->offset, running->fd[i]->mptr->dev, running->fd[i]->mptr->ino);
+			printf("%3d%8s  %5d    [%d, %d]\n", i, modes[mode], running->fd[i]->offset, running->fd[i]->mptr->dev, running->fd[i]->mptr->ino);
 		}
 	}
 }
 
+int read_file()
+{
+  int n, bytes;
+  printf("please enter fd\n");
+  scanf("%d", &n);
+  printf("enter bytes to read\n");
+  scanf("%d", &bytes);
+  char rbuf[bytes+1];
+  if (running->fd[n]->mode == 0 || running->fd[n]->mode == 2)
+  {
+    return myread(n, rbuf, bytes);
+  }
+}
+
+int myread(int fd, char *buf, int nbytes)
+{
+  int start, lbk, blk, cur, cur2, opt;
+  int remain = BLKSIZE - start;
+  int avail = running->fd[fd]->mptr->INODE.i_size - running->fd[fd]->offset;
+  int count = 0;
+  char *cq = buf;
+  char *cp;
+  char readbuf[BLKSIZE];
+  char idbuf[BLKSIZE], ddbuf[BLKSIZE];
+  while (nbytes && avail)
+  {
+    start = running->fd[fd]->offset % BLKSIZE;
+    lbk = running->fd[fd]->offset / BLKSIZE;
+    if (lbk < 12)
+    {
+      blk = running->fd[fd]->mptr->INODE.i_block[lbk];
+    }
+    else if (lbk >= 12 && lbk < 256 + 12)
+    {
+      // indirect blocks
+      get_block(running->fd[fd]->mptr->dev, running->fd[fd]->mptr->INODE.i_block[12], idbuf);
+      blk = idbuf[lbk - 12];
+    }
+    else
+    {
+      // double indirect blocks
+      get_block(running->fd[fd]->mptr->dev, running->fd[fd]->mptr->INODE.i_block[13], idbuf);
+      cur = 65536 / (lbk - 268);
+      get_block(running->fd[fd]->mptr->dev, idbuf[cur], ddbuf);
+      cur2 = 65536 % (lbk - 268);
+      blk = ddbuf[cur2];
+    }
+
+    get_block(running->fd[fd]->mptr->dev, blk, readbuf);
+    *cp = readbuf + start;
+    remain = BLKSIZE - start;
+
+    if (remain > nbytes)
+    {
+      opt = nbytes;
+    }
+    else
+    {
+      opt = remain;
+    }
+    
+
+    memcpy(cq, cp, opt);
+    *cq += opt; // unsure this is correct
+    count += opt;
+    avail -= opt;
+    nbytes -= opt;
+    remain -= opt;
+    running->fd[fd]->offset += opt;
+    if (nbytes <= 0 || avail <= 0)
+        break;
+    
+  }
+
+  printf("myread: read %d char from file descriptor %d\n", count, fd);
+  return count;
+}
+
+int my_cat(char *pathname)
+{
+  char mybuf[BLKSIZE], dummy = 0;
+  int n;
+  int fd = open_file(pathname, "0");
+  while (n = read(fd, mybuf[1024], 1024))
+  {
+    mybuf[n] = 0;
+    for (int i = 0; i < BLKSIZE; i++)
+    {
+      if (mybuf[i] == '\0')
+      {
+        break;
+      }
+      printf("%c", mybuf[i]);
+    }
+    close_file(fd);
+  }
+}
