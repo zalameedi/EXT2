@@ -1191,7 +1191,7 @@ int read_file()
   int n, bytes;
   printf("please enter fd\n");
   scanf("%d", &n);
-  printf("enter bytes to read\n");
+  printf("enter number of bytes to read\n");
   scanf("%d", &bytes);
   char rbuf[bytes+1];
   if (running->fd[n]->mode == 0 || running->fd[n]->mode == 2)
@@ -1288,3 +1288,109 @@ int my_cat(char *pathname)
   sprintf(_fd, "%d", fd);
   close_file(_fd);
 }
+
+int write_file()
+{
+  int n;
+  char data[1024]
+  printf("please enter fd\n");
+  scanf("%d", &n);
+  printf("enter text to write\n");
+  scanf("%s", &data);
+  if (running->fd[n]->mode == 0 || running->fd[n]->mode == 2)
+  {
+    return myread(n, data, sizeof(data));
+  }
+}
+
+int mywrite(int fd, char *buf, int nbytes)
+{
+  OFT *oftp = running->fd[fd];
+  MINODE *mip = oftp->mptr;
+  u32 zero[256];
+  int lbk, start, blk, remain, opt;
+  int ibuf[256];
+  char wbuf[1024];
+  char *cq = buf;
+  int count = 0;
+  while (nbytes > 0)
+  {
+    lbk = oftp->offset / BLKSIZE;
+    start = oftp->offset % BLKSIZE;
+    if (lbk < 12)
+    {
+      if (mip->INODE.i_block[lbk] == 0)
+      {
+        mip->INODE.i_block[lbk] = balloc(mip->dev);
+      }
+    }
+    else if (lbk >= 12 && lbk < 256 + 12)
+    {
+      if (mip->INODE.i_block[12] == 0)
+      {
+        mip->INODE.i_block[12] == balloc(mip->dev);
+        memset(zero, 0, 256);
+        put_block(mip->dev, mip->INODE.i_block[12], zero);
+      }
+      get_block(mip->dev, mip->INODE.i_block[12], ibuf);
+      blk = ibuf[lbk - 12];
+      if (blk == 0)
+      {
+        blk = balloc(mip->dev);
+        ibuf[lbk - 12] = blk;
+      }
+
+    }
+    else
+    {
+      if (mip->INODE.i_block[13] == 0)
+      {
+        mip->INODE.i_block[13] = balloc(mip->dev);
+        memset(zero, 0, 256);
+        put_block(mip->dev, mip->INODE.i_block[13], zero);
+      }
+      get_block(mip->dev, mip->INODE.i_block[13], ibuf);
+      blk = ibuf[(lbk - 256 - 12) / 256];
+      if (blk == 0)
+      {
+        blk = balloc(mip->dev);
+        ibuf[(lbk - 125 - 12) / 256] = blk;
+      }
+      get_block(mip->dev, blk, zero);
+      put_block(mip->dev, mip->INODE.i_block[13], ibuf);
+      blk = zero[(lbk - 12 - 256) % 256];
+      if (blk == 0)
+      {
+        blk = balloc(mip->dev);
+        zero[(lbk - 12 - 256) % 256] = blk;
+      }
+    }
+    
+    get_block(mip->dev, blk, wbuf);
+    char *cp = wbuf + start;
+    remain = BLKSIZE - start;
+    opt = remain;
+    if (nbytes < remain)
+    {
+      opt = nbytes;
+    }
+
+    memmove(cp, cq, opt);
+    nbytes -= opt;
+    remain -= opt;
+    count += opt;
+    oftp->offset += opt;
+    if (oftp->offset > mip->INODE.i_size)
+    {
+      mip->INODE.i_size += opt;
+    }
+    if (nbytes <= 0)
+      break;
+    put_block(mip->dev, blk, wbuf);
+  }
+
+  mip->dirty = 1;
+  printf("wrote %d char into file descriptor fd=%d\n", count, fd);
+  return count;
+}
+
