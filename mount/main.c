@@ -127,7 +127,7 @@ int main(int argc, char *argv[ ])
 
   //printf("hit a key to continue : "); getchar();
   while(1){
-    printf("input command : [ls|cd|pwd|mkdir|creat|link|unlink|symlink|dirstats|stat|chmod|utime|open|close|lseek|pfd|read|cat|quit] ");
+    printf("input command : [ls|cd|pwd|mkdir|creat|link|unlink|symlink|dirstats|stat|chmod|utime|open|close|lseek|pfd|read|cat|cp|write|quit] ");
     fgets(line, 128, stdin);
     line[strlen(line)-1] = 0;
     if (line[0]==0)
@@ -212,6 +212,14 @@ int main(int argc, char *argv[ ])
     if (strcmp(cmd, "read") == 0)
     {
       read_file();
+    }
+    if (strcmp(cmd, "write") == 0)
+    {
+      write_file();
+    }
+    if (strcmp(cmd, "cp") == 0)
+    {
+      my_cp(pathname, third);
     }
   }
 }

@@ -1262,7 +1262,7 @@ int myread(int fd, char *buf, int nbytes)
     
   }
 
-  printf("myread: read %d char from file descriptor %d\n", count, fd);
+  //printf("myread: read %d char from file descriptor %d\n", count, fd);
   return count;
 }
 
@@ -1292,7 +1292,7 @@ int my_cat(char *pathname)
 int write_file()
 {
   int n;
-  char data[1024]
+  char data[1024];
   printf("please enter fd\n");
   scanf("%d", &n);
   printf("enter text to write\n");
@@ -1338,6 +1338,7 @@ int mywrite(int fd, char *buf, int nbytes)
       {
         blk = balloc(mip->dev);
         ibuf[lbk - 12] = blk;
+        put_block(mip->dev, blk, ibuf);
       }
 
     }
@@ -1355,14 +1356,17 @@ int mywrite(int fd, char *buf, int nbytes)
       {
         blk = balloc(mip->dev);
         ibuf[(lbk - 125 - 12) / 256] = blk;
+        put_block(mip->dev, mip->INODE.i_block[13], ibuf);
+        memset(zero, 0, 256);
+        put_block(mip->dev, blk, zero);
       }
       get_block(mip->dev, blk, zero);
-      put_block(mip->dev, mip->INODE.i_block[13], ibuf);
       blk = zero[(lbk - 12 - 256) % 256];
       if (blk == 0)
       {
         blk = balloc(mip->dev);
         zero[(lbk - 12 - 256) % 256] = blk;
+        put_block(mip->dev, blk, zero);
       }
     }
     
@@ -1384,13 +1388,29 @@ int mywrite(int fd, char *buf, int nbytes)
     {
       mip->INODE.i_size += opt;
     }
+    put_block(mip->dev, blk, wbuf);
     if (nbytes <= 0)
       break;
-    put_block(mip->dev, blk, wbuf);
   }
 
   mip->dirty = 1;
-  printf("wrote %d char into file descriptor fd=%d\n", count, fd);
+  //printf("wrote %d char into file descriptor fd=%d\n", count, fd);
   return count;
 }
 
+int my_cp(char *src, char *dest)
+{
+  char _fd[10], _gd[10];
+  int fd = open_file(src, "0");
+  int gd = open_file(dest, "1");
+  int n;
+  char buf[1024];
+  while(n = myread(fd, buf, BLKSIZE))
+  {
+    mywrite(gd, buf, n);
+  }
+  sprintf(_fd, "%d", fd);
+  sprintf(_gd, "%d", gd);
+  close_file(_fd);
+  close_file(_gd);
+}

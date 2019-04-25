@@ -1,13 +1,4 @@
 /*************** type.h file ************************/
-#include <stdio.h>
-#include <stdlib.h>
-#include <fcntl.h>
-#include <string.h>
-#include <time.h>
-#include <libgen.h>
-#include <sys/stat.h>
-#include <ext2fs/ext2_fs.h>
-
 typedef unsigned char  u8;
 typedef unsigned short u16;
 typedef unsigned int   u32;
