@@ -157,7 +157,7 @@ int list_file()
     if (ino==0){
       printf("no such file %s\n", pathname);
       return -1;
-    }
+    }running->fd[i].mptr->dev
     mip = iget(dev, ino);
     mode = mip->INODE.i_mode;
     if (!S_ISDIR(mode))
@@ -1307,8 +1307,11 @@ int mywrite(int fd, char *buf, int nbytes)
 {
   OFT *oftp = running->fd[fd];
   MINODE *mip = oftp->mptr;
-  u32 zero[256];
-  int lbk, start, blk, remain, opt;
+  int zero[256];
+  int zeroid[256];
+  int zerodd[256];
+  int zeroddd[256];
+  int lbk, start, blk, remain, opt, blk2;
   int ibuf[256];
   char wbuf[1024];
   char *cq = buf;
@@ -1323,12 +1326,15 @@ int mywrite(int fd, char *buf, int nbytes)
       {
         mip->INODE.i_block[lbk] = balloc(mip->dev);
       }
+      //printf("directblock thing\n");
+      blk = mip->INODE.i_block[lbk];
     }
     else if (lbk >= 12 && lbk < 256 + 12)
     {
       if (mip->INODE.i_block[12] == 0)
       {
-        mip->INODE.i_block[12] == balloc(mip->dev);
+        blk2 = balloc(mip->dev);
+        mip->INODE.i_block[12] == blk2;
         memset(zero, 0, 256);
         put_block(mip->dev, mip->INODE.i_block[12], zero);
       }
@@ -1340,15 +1346,14 @@ int mywrite(int fd, char *buf, int nbytes)
         ibuf[lbk - 12] = blk;
         put_block(mip->dev, blk, ibuf);
       }
-
     }
     else
     {
       if (mip->INODE.i_block[13] == 0)
       {
         mip->INODE.i_block[13] = balloc(mip->dev);
-        memset(zero, 0, 256);
-        put_block(mip->dev, mip->INODE.i_block[13], zero);
+        memset(zeroid, 0, 256);
+        put_block(mip->dev, mip->INODE.i_block[13], zeroid);
       }
       get_block(mip->dev, mip->INODE.i_block[13], ibuf);
       blk = ibuf[(lbk - 256 - 12) / 256];
@@ -1357,16 +1362,16 @@ int mywrite(int fd, char *buf, int nbytes)
         blk = balloc(mip->dev);
         ibuf[(lbk - 125 - 12) / 256] = blk;
         put_block(mip->dev, mip->INODE.i_block[13], ibuf);
-        memset(zero, 0, 256);
-        put_block(mip->dev, blk, zero);
+        memset(zerodd, 0, 256);
+        put_block(mip->dev, blk, zerodd);
       }
-      get_block(mip->dev, blk, zero);
-      blk = zero[(lbk - 12 - 256) % 256];
+      get_block(mip->dev, blk, zeroddd);
+      blk = zeroddd[(lbk - 12 - 256) % 256];
       if (blk == 0)
       {
         blk = balloc(mip->dev);
-        zero[(lbk - 12 - 256) % 256] = blk;
-        put_block(mip->dev, blk, zero);
+        zeroddd[(lbk - 12 - 256) % 256] = blk;
+        put_block(mip->dev, blk, zeroddd);
       }
     }
     
@@ -1402,7 +1407,7 @@ int my_cp(char *src, char *dest)
 {
   char _fd[10], _gd[10];
   int fd = open_file(src, "0");
-  int gd = open_file(dest, "1");
+  int gd = open_file(dest, "2");
   int n;
   char buf[1024];
   while(n = myread(fd, buf, BLKSIZE))
