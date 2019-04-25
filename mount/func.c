@@ -1414,3 +1414,19 @@ int my_cp(char *src, char *dest)
   close_file(_fd);
   close_file(_gd);
 }
+
+int mymv(char *src, char *dest)
+{
+  int sino = getino(running->cwd->dev, src);
+  if (sino == 0)
+  {
+    printf("src does not exist\n");
+    return -1;
+  }
+  if (mylink(src, dest) == 0)
+  {
+    printf("dest exists, can't move\n");
+    return -1;
+  }
+  my_unlink(src);
+}

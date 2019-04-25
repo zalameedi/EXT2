@@ -301,35 +301,39 @@ int decFreeblocks(int dev)
 
 int truncate(INODE *ip, int ino)
 {
-	for (int i = 0; i < 12 && ip->i_block[i] != 0; i++)
+	for (int i = 0; i < 12; i++)
 	{
 		if (ip->i_block[i] != 0)
 			bdalloc(dev, ip->i_block[i]);
 		else
-			return;
+			break;
 	}
-	int blockt[BLKSIZE];
+	int blockt[256];
 	get_block(dev, ip->i_block[12], blockt);
-	for (int i = 0; i < 256 || blockt[i] != 0; i++)
+	for (int i = 0; i < 256; i++)
 	{
 		if (blockt[i] != 0)
 			bdalloc(dev, blockt[i]);
 		else
-			return;
+			break;
 	}
-	int blockt2[BLKSIZE];
+	int blockt2[256];
 	get_block(dev, ip->i_block[13], blockt);
-	for (int i = 0; i < 256 || blockt[i] != 0; i++)
+	for (int i = 0; i < 256; i++)
 	{
 		get_block(dev, blockt[i], blockt2);
-		for (int j = 0; j < 256 || blockt2[j] != 0; j++)
+		for (int j = 0; j < 256; j++)
 		{
 			if (blockt2[j] != 0)
+      {
 				bdalloc(dev, blockt2[j]);
+      }
 			else
-				return;
+      {
+	      idalloc(dev, ino);
+        return;
+      }
 		}
 	}
-	idalloc(dev, ino);
 }
 
