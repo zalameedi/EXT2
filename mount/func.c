@@ -157,7 +157,7 @@ int list_file()
     if (ino==0){
       printf("no such file %s\n", pathname);
       return -1;
-    }running->fd[i].mptr->dev
+    }
     mip = iget(dev, ino);
     mode = mip->INODE.i_mode;
     if (!S_ISDIR(mode))
@@ -986,7 +986,7 @@ void my_unlink(char *path)
                                 return;
                 }
 
-                ino = getino(running->cwd, path);
+                ino = getino(running->cwd->dev, path);
 
                 if(ino == 0)
                 {
